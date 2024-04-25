@@ -43,14 +43,32 @@ class $modify(LevelEditorLayer) {
 	}
 };
 
-class $modify(EditorPauseLayer) {
+class $modify(MacosCompliantEditorPauseLayer, EditorPauseLayer) {
 	void onExitEditor(CCObject* sender) {
+#ifndef GEODE_IS_MACOS
 		EditorPauseLayer::onExitEditor(sender);
-
+#endif
 		log::info("stop music (exit)");
 		audioManager->stopAudio();
 		audioManager->onExitEditor();
 	}
+
+#ifdef GEODE_IS_MACOS
+	void onExitNoSave(CCObject* sender) {
+		MacosCompliantEditorPauseLayer::onExitEditor(sender);
+		EditorPauseLayer::onExitNoSave(sender);
+	}
+
+	void onSaveAndExit(CCObject* sender) {
+		MacosCompliantEditorPauseLayer::onExitEditor(sender);
+		EditorPauseLayer::onSaveAndExit(sender);
+	}
+
+	void onSaveAndPlay(CCObject* sender) {
+		MacosCompliantEditorPauseLayer::onExitEditor(sender);
+		EditorPauseLayer::onSaveAndPlay(sender);
+	}
+#endif
 
 	// turn up and down music when pausing
 	static EditorPauseLayer* create(LevelEditorLayer* editor) {
