@@ -20,13 +20,14 @@ jobs:
         #- name: macOS
         #  os: macos-latest
 
-        - name: Android32
-          os: ubuntu-latest
-          target: Android32
+        # TODO: remember to add these back after i can actually test them
+        #- name: Android32
+        #  os: ubuntu-latest
+        #  target: Android32
 
-        - name: Android64
-          os: ubuntu-latest
-          target: Android64
+        #- name: Android64
+        #  os: ubuntu-latest
+        #  target: Android64
 
     name: ${{ matrix.config.name }}
     runs-on: ${{ matrix.config.os }}
