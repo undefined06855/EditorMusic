@@ -2,6 +2,7 @@
 #include <Geode/modify/LevelEditorLayer.hpp>
 #include <Geode/modify/EditorPauseLayer.hpp>
 #include <Geode/modify/EditorUI.hpp>
+#include <Geode/modify/CCScheduler.hpp>
 #include "AudioManager.hpp"
 
 using namespace geode::prelude;
@@ -20,7 +21,7 @@ class $modify(LevelEditorLayer) {
 		LevelEditorLayer::onPausePlaytest();
 
 		log::info("start music quieter (paused playtest)");
-		audioManager->playAudio();
+		audioManager->playAudio(false);
 		audioManager->turnDownMusic();
 	}
 
@@ -28,7 +29,7 @@ class $modify(LevelEditorLayer) {
 		LevelEditorLayer::onStopPlaytest();
 
 		log::info("start music (stopped playtest)");
-		audioManager->playAudio();
+		audioManager->playAudio(false);
 		audioManager->turnUpMusic();
 	}
 
@@ -36,15 +37,9 @@ class $modify(LevelEditorLayer) {
 		if (!LevelEditorLayer::init(p0, p1)) return false;
 
 		log::info("start music (entered editor)");
-		audioManager->playAudio();
+		audioManager->playAudio(true);
 
 		return true;
-	}
-};
-
-class $modify(EditorUI) {
-	void onPlayback(CCObject* sender) {
-		this->
 	}
 };
 
@@ -68,6 +63,13 @@ class $modify(EditorPauseLayer) {
 		log::info("turn up music");
 		audioManager->turnUpMusic();
 		EditorPauseLayer::onResume(sender);
+	}
+};
+
+class $modify(CCScheduler) {
+	void update(float dt) {
+		CCScheduler::update(dt);
+		audioManager->tick(dt);
 	}
 };
 
