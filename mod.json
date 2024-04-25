@@ -1,6 +1,6 @@
 {
 	"geode": "2.0.0-beta.25",
-	"gd": { "win": "2.204" },
+	"gd": { "win": "2.204", "android": "2.205" },
 	"version": "v1.0.0",
 	"id": "undefined0.editormusic",
 	"name": "EditorMusic",
