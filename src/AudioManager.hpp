@@ -54,7 +54,13 @@ public:
 
 		int id;
 		if (newSong) {
-			id = rand() % this->sounds.size();
+			// im sure this will be fine, right?
+			if (this->sounds.size() > 1) {
+				do {
+					id = rand() % this->sounds.size();
+				} while (id == this->songID);
+			}
+			
 			this->startOffset = 0;
 			log::info("new song!");
 			this->songID = id;

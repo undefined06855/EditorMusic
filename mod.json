@@ -5,5 +5,7 @@
 	"id": "undefined0.editormusic",
 	"name": "EditorMusic",
 	"developer": "undefined0",
-	"description": "hey it's like super mario maker"
+	"description": "hey it's like super mario maker",
+	"repository": "https://github.com/undefined06855/EditorMusic",
+	"tags": [ "editor", "enhancement" ]
 }

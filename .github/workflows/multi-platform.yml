@@ -15,8 +15,10 @@ jobs:
         - name: Windows
           os: windows-latest
 
-        - name: macOS
-          os: macos-latest
+        # fails because of fmod stuff
+        # if someone can fix that would be great thanks
+        #- name: macOS
+        #  os: macos-latest
 
         - name: Android32
           os: ubuntu-latest
