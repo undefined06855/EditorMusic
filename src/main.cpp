@@ -1,6 +1,7 @@
 #include <Geode/Geode.hpp>
 #include <Geode/modify/LevelEditorLayer.hpp>
 #include <Geode/modify/EditorPauseLayer.hpp>
+#include <Geode/modify/MenuLayer.hpp>
 #include <Geode/modify/EditorUI.hpp>
 #include <Geode/modify/CCScheduler.hpp>
 #include "AudioManager.hpp"
@@ -8,6 +9,8 @@
 using namespace geode::prelude;
 
 AudioManager* audioManager = new AudioManager();
+
+bool isPlaybackPlaying = false;
 
 class $modify(LevelEditorLayer) {
 	void onPlaytest() {
@@ -59,16 +62,30 @@ class $modify(EditorPauseLayer) {
 	}
 
 	void onResume(CCObject* sender) {
+		EditorPauseLayer::onResume(sender);
 		log::info("turn up music");
 		audioManager->turnUpMusic();
-		EditorPauseLayer::onResume(sender);
 	}
 };
 
 class $modify(CCScheduler) {
 	void update(float dt) {
 		CCScheduler::update(dt);
+
+		if (audioManager->hasNoSongs) return;
 		audioManager->tick(dt);
+	}
+};
+
+class $modify(MenuLayer) {
+	bool init() {
+		if (!MenuLayer::init()) return false;
+
+		if (audioManager->hasNoSongs) {
+			FLAlertLayer::create("Message from EditorMusic", "You have no songs in your config folder! Press the pencil icon next to the mod config to access the folder, where you can place music. See the mod description for more details.", "OK");
+		}
+
+		return true;
 	}
 };
 

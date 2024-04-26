@@ -16,7 +16,9 @@ public:
 	FMOD::Channel* channel;
 	FMOD::System* system = FMODAudioEngine::sharedEngine()->m_system;
 	unsigned int startOffset = 0;
-	int songID = 0;
+	int songID;
+	bool hasNoSongs = false;
+
 
 	void setup() {
 		std::vector<std::string> files = {};
@@ -37,7 +39,13 @@ public:
 			}
 		}
 
-		log::info("Sounds created!");
+		log::info("Sounds created! songs={}", this->sounds.size());
+		
+		if (this->sounds.size() == 0) {
+			// oh there's no songs, disable everything
+			this->hasNoSongs = true;
+			return;
+		}
 
 		this->songID = rand() % this->sounds.size();
 
@@ -45,12 +53,8 @@ public:
 	}
 
 	void playAudio(bool newSong) {
+		if (this->hasNoSongs) return;
 		if (this->isRunning) return;
-
-		if (this->sounds.size() == 0) {
-			log::info("Sounds not created!");
-			return;
-		}
 
 		int id;
 		if (newSong) {
@@ -77,6 +81,8 @@ public:
 	}
 
 	void stopAudio() {
+		if (this->hasNoSongs) return;
+
 		// PLEASE can someone submit a pr that adds fading to this thanks
 		if (!this->isRunning) return;
 
@@ -100,6 +106,8 @@ public:
 	}
 
 	void tick(float dt) {
+		if (this->hasNoSongs) return;
+
 		// if fading needs to be added it can be added here
 		// and i probably will but i can't be bothered
 
