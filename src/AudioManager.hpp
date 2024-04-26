@@ -8,7 +8,8 @@ protected:
 	std::unordered_set<std::string> extensions = {
 		".mp3",
 		".wav",
-		".ogg"
+		".ogg",
+		".flac"
 	};
 
 public:
