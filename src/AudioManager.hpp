@@ -19,7 +19,6 @@ public:
 	int songID;
 	bool hasNoSongs = false;
 
-
 	void setup() {
 		std::vector<std::string> files = {};
 
@@ -33,8 +32,7 @@ public:
 
 				this->sounds.push_back(sound);
 				log::info("Sound created for {}", path.filename().string());
-			}
-			else {
+			} else {
 				log::info("Unsupported file extension found in config dir: {}", path.filename().string());
 			}
 		}
@@ -94,11 +92,11 @@ public:
 	}
 
 	void turnDownMusic() {
-		this->channel->setVolume(GameManager::get()->m_bgVolume * .4f);
+		this->channel->setVolume(.4f * Mod::get()->getSettingValue<double>("volume"));
 	}
 
 	void turnUpMusic() {
-		this->channel->setVolume(GameManager::get()->m_bgVolume * .8f);
+		this->channel->setVolume(Mod::get()->getSettingValue<double>("volume"));
 	}
 
 	void onExitEditor() {
@@ -120,5 +118,12 @@ public:
 			this->isRunning = false;
 			this->playAudio(true);
 		}
+	}
+
+	void nextSong() {
+		if (this->hasNoSongs) return;
+
+		this->stopAudio();
+		this->playAudio(true);
 	}
 };
