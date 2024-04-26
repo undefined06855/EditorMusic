@@ -70,11 +70,28 @@ class $modify(EditorUI) {
 };
 
 class $modify(FunkyEditorPauseLayer, EditorPauseLayer) {
-	void onExitEditor(CCObject* sender) {
-		EditorPauseLayer::onExitEditor(sender);
+	void onExitNoSave(CCObject* sender) {
 		log::info("stop music (exit)");
 		audioManager->stopAudio();
 		audioManager->onExitEditor();
+
+		EditorPauseLayer::onExitNoSave(sender);
+	}
+
+	void onSaveAndExit(CCObject* sender) {
+		log::info("stop music (save&exit)");
+		audioManager->stopAudio();
+		audioManager->onExitEditor();
+
+		EditorPauseLayer::onSaveAndExit(sender);
+	}
+
+	void onSaveAndPlay(CCObject* sender) {
+		log::info("stop music (save&play)");
+		audioManager->stopAudio();
+		audioManager->onExitEditor();
+
+		EditorPauseLayer::onSaveAndPlay(sender);
 	}
 
 	// turn up and down music when pausing
@@ -93,27 +110,59 @@ class $modify(FunkyEditorPauseLayer, EditorPauseLayer) {
 	bool init(LevelEditorLayer* p0) {
 		if (!EditorPauseLayer::init(p0)) return false;
 
-		auto menu = this->getChildByID("small-actions-menu");
+		// skip song
+		if (Mod::get()->getSettingValue<bool>("skip-song")) {
+			auto smallActionsMenu = this->getChildByID("small-actions-menu");
 
-		auto spr = ButtonSprite::create(
-			"Next\nSong", 30, 0, .4f, true,
-			"bigFont.fnt", "GJ_button_04.png", 30.f
-		);
-		spr->setScale(.8f);
+			auto spr = ButtonSprite::create(
+				"Next\nSong", 30, 0, .4f, true,
+				"bigFont.fnt", "GJ_button_04.png", 30.f
+			);
+			spr->setScale(.8f);
 
-		auto nextSongButton = CCMenuItemSpriteExtra::create(
-			spr, this, menu_selector(FunkyEditorPauseLayer::onNextSong)
-		);
-		nextSongButton->setID("next-song-btn"_spr);
-		menu->insertAfter(nextSongButton, nullptr);
+			auto nextSongButton = CCMenuItemSpriteExtra::create(
+				spr, this, menu_selector(FunkyEditorPauseLayer::onNextSong)
+			);
+			nextSongButton->setID("next-song-btn"_spr);
+			smallActionsMenu->insertAfter(nextSongButton, nullptr);
 
-		menu->updateLayout();
+			smallActionsMenu->updateLayout();
+		}
+
+		// current song
+		if (Mod::get()->getSettingValue<bool>("current-song")) {
+			auto topMenu = this->getChildByIDRecursive("top-menu");
+			if (!topMenu) return true;
+
+			auto song = CCLabelBMFont::create(audioManager->currentSongName.c_str(), "bigFont.fnt");
+			topMenu->addChild(song);
+			song->setScale(.35f);
+			song->setID("current-song-title"_spr);
+			song->setPositionX(topMenu->getContentWidth() / 2);
+			song->setPositionY(35.f);
+
+			auto songHeader = CCLabelBMFont::create("Current song:", "bigFont.fnt");
+			topMenu->addChild(songHeader);
+			songHeader->setScale(.27f);
+			songHeader->setID("current-song-header"_spr);
+			songHeader->setPositionX(topMenu->getContentWidth() / 2);
+			songHeader->setPositionY(46.f);
+
+			auto bg = CCScale9Sprite::create("GJ_square01.png");
+			topMenu->addChild(bg);
+			bg->setContentSize(CCSize{ 185.f, 60.f });
+			bg->setID("current-song-bg"_spr);
+			bg->setPositionX(topMenu->getContentWidth() / 2);
+			bg->setPositionY(45.f);
+			bg->setZOrder(-1);
+		}
 
 		return true;
 	}
 
 	void onNextSong(CCObject* sender) {
 		audioManager->nextSong();
+		audioManager->turnDownMusic(); // pause menu so has to turn down the music!
 	}
 };
 
@@ -123,6 +172,14 @@ class $modify(CCScheduler) {
 
 		if (audioManager->hasNoSongs) return;
 		audioManager->tick(dt);
+
+		if (auto levelEditor = LevelEditorLayer::get()) {
+			if (auto songTitle = static_cast<CCLabelBMFont*>(levelEditor->getChildByIDRecursive("current-song-title"_spr))) {
+				if (songTitle->getString() == audioManager->currentSongName.c_str()) return;
+
+				songTitle->setString(audioManager->currentSongName.c_str());
+			}
+		}
 	}
 };
 

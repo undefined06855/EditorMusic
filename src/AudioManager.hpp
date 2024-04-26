@@ -13,6 +13,8 @@ protected:
 
 public:
 	std::vector<FMOD::Sound*> sounds;
+	std::vector<std::string> songNames;
+
 	FMOD::Channel* channel;
 	FMOD::System* system = FMODAudioEngine::sharedEngine()->m_system;
 	unsigned int startOffset = 0;

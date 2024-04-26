@@ -1,4 +1,6 @@
 # EditorMusic
+## 1.0.4
+- More bugfixes
 ## v1.0.3
 - Bugfixes
 ## v1.0.2
