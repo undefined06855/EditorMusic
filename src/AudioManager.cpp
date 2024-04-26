@@ -21,7 +21,7 @@ void AudioManager::setup() {
 				res = sound->getTag("TIT2", 0, &tag);
 			} else if (path.extension().string() == ".wav") {
 				res = sound->getTag("INAM", 0, &tag);
-			} else if (path.extension().string() == ".ogg") {
+			} else if (path.extension().string() == ".ogg" || path.extension().string() == ".flac") {
 				res = sound->getTag("TITLE", 0, &tag);
 			}
 
