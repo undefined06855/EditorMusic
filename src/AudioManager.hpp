@@ -92,7 +92,7 @@ public:
 	}
 
 	void turnDownMusic() {
-		this->channel->setVolume(.4f * Mod::get()->getSettingValue<double>("volume"));
+		this->channel->setVolume(0.3f * Mod::get()->getSettingValue<double>("volume"));
 	}
 
 	void turnUpMusic() {

@@ -21,6 +21,13 @@ class $modify(LevelEditorLayer) {
 		audioManager->stopAudio();
 	}
 
+	void onResumePlaytest() {
+		LevelEditorLayer::onResumePlaytest();
+
+		log::info("stop music (resumed playtest)");
+		audioManager->stopAudio();
+	}
+
 	void onPausePlaytest() {
 		LevelEditorLayer::onPausePlaytest();
 
