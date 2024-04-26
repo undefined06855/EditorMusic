@@ -70,6 +70,13 @@ class $modify(EditorUI) {
 };
 
 class $modify(FunkyEditorPauseLayer, EditorPauseLayer) {
+	void onExitEditor(CCObject* sender) {
+		log::info("stop music (exited editor generic)");
+		audioManager->stopAudio();
+
+		EditorPauseLayer::onExitEditor(sender);
+	}
+
 	void onExitNoSave(CCObject* sender) {
 		log::info("stop music (exit)");
 		audioManager->stopAudio();

@@ -20,6 +20,7 @@ public:
 	unsigned int startOffset = 0;
 	int songID;
 	bool hasNoSongs = false;
+	std::string currentSongName = "";
 
 	void setup();
 	void playAudio(bool newSong);

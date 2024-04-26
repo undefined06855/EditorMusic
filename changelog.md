@@ -1,8 +1,7 @@
 # EditorMusic
-## 1.0.4
-- More bugfixes
-## v1.0.3
+## v1.1.0
 - Bugfixes
+- Added the current playing song in the editor
 ## v1.0.2
 - Fix random bugs and add editor pause menu button
 ## v1.0.1
