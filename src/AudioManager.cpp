@@ -40,7 +40,7 @@ void AudioManager::setup() {
 			this->songNames.push_back(songName);
 			log::info("Song name is {}", songName);
 		} else {
-			log::info("Unsupported file extension found in config dir: {}", path.filename().string());
+			log::info("Unsupported file extension found in config dir: {} (from {})", path.extension().string(), path.filename().string());
 		}
 	}
 
