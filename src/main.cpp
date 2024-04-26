@@ -77,6 +77,9 @@ class $modify(FunkyEditorPauseLayer, EditorPauseLayer) {
 		EditorPauseLayer::onExitEditor(sender);
 	}
 
+	/*
+	// this (obviously) gets called before the flalertlayer so it's probably not
+	// of much use
 	void onExitNoSave(CCObject* sender) {
 		log::info("stop music (exit)");
 		audioManager->stopAudio();
@@ -84,6 +87,7 @@ class $modify(FunkyEditorPauseLayer, EditorPauseLayer) {
 
 		EditorPauseLayer::onExitNoSave(sender);
 	}
+	*/
 
 	void onSaveAndExit(CCObject* sender) {
 		log::info("stop music (save&exit)");
