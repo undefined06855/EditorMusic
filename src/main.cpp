@@ -6,6 +6,8 @@
 #include <Geode/modify/CCScheduler.hpp>
 #include <Geode/modify/LoadingLayer.hpp>
 #include "AudioManager.hpp"
+#include <fmt/core.h>
+#include <fmt/color.h>
 
 using namespace geode::prelude;
 
@@ -214,5 +216,7 @@ class $modify(MenuLayer) {
 };
 
 $execute{
+	// so silly
+	fmt::print(fg(fmt::rgb(0x4287f5)) | bg(fmt::rgb(0xFF0000)), "[EditorMusic] =============== AudioManager loading!! ===============");
 	audioManager->setup();
 }

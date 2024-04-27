@@ -24,6 +24,7 @@ public:
 	std::string currentSongName = "";
 
 	void setup();
+	void setupFromOneFolder(ghc::filesystem::path path);
 	void playAudio(bool newSong);
 	void stopAudio();
 	void turnDownMusic() const;
