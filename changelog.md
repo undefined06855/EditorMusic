@@ -1,7 +1,7 @@
 # EditorMusic
 ## v1.1.1
 - Bugfixes
-- idk im going to commit to let gh tell me
+- Support for utf-16 strings (probably could be put under bugfixes)
 ## v1.1.0
 - Bugfixes
 - Added the current playing song in the editor

@@ -217,6 +217,6 @@ class $modify(MenuLayer) {
 
 $execute{
 	// so silly
-	fmt::print(fg(fmt::rgb(0x4287f5)) | bg(fmt::rgb(0xFF0000)), "[EditorMusic] =============== AudioManager loading!! ===============");
+	log::info("{}", fmt::styled("[EditorMusic] =============== AudioManager loading!! ===============", fg(fmt::rgb(0x4287f5)) | bg(fmt::rgb(0xFF0000))));
 	audioManager->setup();
 }
