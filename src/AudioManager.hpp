@@ -21,6 +21,7 @@ public:
 	unsigned int startOffset = 0;
 	int songID;
 	bool hasNoSongs = false;
+	bool customPathDoesntExist = false;
 	std::string currentSongName = "";
 
 	void setup();

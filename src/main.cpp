@@ -218,6 +218,17 @@ class $modify(MenuLayer) {
 			alert->show();
 		}
 
+		if (audioManager->customPathDoesntExist) {
+			auto alert = FLAlertLayer::create(
+				"Message from EditorMusic",
+				"The custom path you provided does not exist! If you don't have a custom path, set the setting to \"(none)\"",
+				"OK"
+			);
+
+			alert->m_scene = this;
+			alert->show();
+		}
+
 		return true;
 	}
 };
