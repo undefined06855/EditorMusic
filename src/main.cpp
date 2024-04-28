@@ -13,7 +13,7 @@ using namespace geode::prelude;
 
 AudioManager* audioManager = new AudioManager();
 
-bool isPlaybackPlaying = false;
+bool startingOrStoppingPlayback = false;
 
 class $modify(LevelEditorLayer) {
 	void onPlaytest() {
@@ -46,7 +46,7 @@ class $modify(LevelEditorLayer) {
 		audioManager->turnUpMusic();
 	}
 
-	bool init(GJGameLevel* p0, bool p1) {
+	bool init(GJGameLevel * p0, bool p1) {
 		if (!LevelEditorLayer::init(p0, p1)) return false;
 
 		log::info("start music (entered editor)");
@@ -54,18 +54,22 @@ class $modify(LevelEditorLayer) {
 
 		return true;
 	}
+
+	void stopPlayback() {
+		LevelEditorLayer::stopPlayback();
+
+		log::info("start music (stopped playback)");
+		audioManager->playAudio(false);
+	}
 };
 
 class $modify(EditorUI) {
 	void onPlayback(CCObject * sender) {
-		isPlaybackPlaying = !isPlaybackPlaying;
-		if (isPlaybackPlaying) {
-			log::info("stop music (playback started)");
-			audioManager->stopAudio();
-		} else {
-			log::info("start music (playback stopped)");
-			audioManager->playAudio(false);
-		}
+		log::info("Stop music (toggle playback)");
+		// EditorUI::onPlayback could run LevelEditorLayer::stopPlayback which will play the audio
+		// and if we stop it now it could already be stopped
+		// bit hard to think of but should work
+		audioManager->stopAudio();
 
 		EditorUI::onPlayback(sender);
 	}

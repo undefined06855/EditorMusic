@@ -9,7 +9,14 @@
       "installRoot": "${projectDir}\\out\\install\\${name}",
       "cmakeCommandArgs": "",
       "buildCommandArgs": "",
-      "ctestCommandArgs": ""
+      "ctestCommandArgs": "",
+      "variables": [
+        {
+          "name": "GEODE_BINDINGS_REPO_PATH",
+          "value": "C:\\Users\\undefined0\\things\\bindings",
+          "type": "STRING"
+        }
+      ]
     }
   ]
 }
