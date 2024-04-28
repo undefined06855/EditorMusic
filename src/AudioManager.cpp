@@ -136,7 +136,7 @@ void AudioManager::stopAudio() {
 }
 
 void AudioManager::turnDownMusic() const {
-	this->channel->setVolume(0.3f * Mod::get()->getSettingValue<double>("volume"));
+	this->channel->setVolume(0.5f * Mod::get()->getSettingValue<double>("volume"));
 }
 
 void AudioManager::turnUpMusic() const {

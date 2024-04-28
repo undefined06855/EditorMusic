@@ -1,4 +1,6 @@
 # EditorMusic
+## v1.1.2
+- Bugfixes (this is probably the most bugfixes I've had to do in a mod)
 ## v1.1.1
 - Bugfixes
 - Support for utf-16 strings (probably could be put under bugfixes)

@@ -13,8 +13,6 @@ using namespace geode::prelude;
 
 AudioManager* audioManager = new AudioManager();
 
-bool startingOrStoppingPlayback = false;
-
 class $modify(LevelEditorLayer) {
 	void onPlaytest() {
 		LevelEditorLayer::onPlaytest();
@@ -190,11 +188,16 @@ class $modify(CCScheduler) {
 		if (audioManager->hasNoSongs) return;
 		audioManager->tick(dt);
 
+		// damn this is a lot of indentation
 		if (auto levelEditor = LevelEditorLayer::get()) {
-			if (auto songTitle = static_cast<CCLabelBMFont*>(levelEditor->getChildByIDRecursive("current-song-title"_spr))) {
-				if (songTitle->getString() == audioManager->currentSongName.c_str()) return;
+			if (auto pauseLayer = static_cast<EditorPauseLayer*>(levelEditor->getChildByID("EditorPauseLayer"))) {
+				if (auto topMenu = static_cast<CCMenu*>(pauseLayer->getChildByID("top-menu"))) {
+					if (auto songTitle = static_cast<CCLabelBMFont*>(topMenu->getChildByID("current-song-title"_spr))) {
+						if (songTitle->getString() == audioManager->currentSongName.c_str()) return;
 
-				songTitle->setString(audioManager->currentSongName.c_str());
+						songTitle->setString(audioManager->currentSongName.c_str());
+					}
+				}
 			}
 		}
 	}
@@ -219,8 +222,8 @@ class $modify(MenuLayer) {
 	}
 };
 
-$execute{
+$execute {
 	// so silly
-	log::info("{}", fmt::styled("[EditorMusic] =============== AudioManager loading!! ===============", fg(fmt::rgb(0x4287f5)) | bg(fmt::rgb(0xFF0000))));
+	log::info("{}", fmt::styled("=============== AudioManager loading!! ===============", fg(fmt::rgb(0x4287f5)) | bg(fmt::rgb(0xFF0000))));
 	audioManager->setup();
 }
