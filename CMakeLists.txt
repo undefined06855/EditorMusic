@@ -4,14 +4,15 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_OSX_ARCHITECTURES "x86_64")
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 
+# hahaha
 set(GEODE_REVERT_TODO_RETURN ON)
 
 project(EditorMusic VERSION 1.0.0)
 
 add_library(${PROJECT_NAME} SHARED
-    src/main.cpp
     src/AudioManager.cpp
-    # Add your cpp files here
+    src/main.cpp
+    src/Keybinds.cpp
 )
 
 if (NOT DEFINED ENV{GEODE_SDK})

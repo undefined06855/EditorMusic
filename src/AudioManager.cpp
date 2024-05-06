@@ -2,6 +2,12 @@
 #include <codecvt>
 #include <regex>
 
+AudioManager::AudioManager() {}
+AudioManager& AudioManager::get() {
+	static AudioManager instance;
+	return instance;
+}
+
 void AudioManager::setupFromOneFolder(ghc::filesystem::path path) {
 	for (const auto& file : std::filesystem::directory_iterator(path.string())) {
 		std::filesystem::path path = file.path();
@@ -110,32 +116,44 @@ void AudioManager::setup() {
 	this->channel->setMode(FMOD_LOOP_OFF);
 }
 
-void AudioManager::playAudio(bool newSong) {
+void AudioManager::playAudio(int id) {
 	if (this->hasNoSongs) return;
 	if (this->isRunning) return;
-
-	int id;
-	if (newSong) {
-		// im sure this will be fine, right?
-		do {
-			id = rand() % this->sounds.size();
-		} while (id == this->songID && this->sounds.size() > 1);
-
-		this->startOffset = 0;
-		log::info("new song! id={}", id);
-		this->songID = id;
-	} else id = this->songID;
 
 	auto sound = this->sounds.at(id);
 
 	this->system->playSound(sound, nullptr, false, &(this->channel));
 	this->turnUpMusic();
 	this->isRunning = true;
-	log::info("offset: {}ms", startOffset);
-	this->channel->setPosition(startOffset, FMOD_TIMEUNIT_MS);
+	log::info("offset: {}ms", this->startOffset);
+	this->channel->setPosition(this->startOffset, FMOD_TIMEUNIT_MS);
 
 	this->currentSongName = this->songNames.at(id);
 	log::info("current song name: {}", this->currentSongName);
+}
+
+void AudioManager::playAudio(bool newSong) {
+	if (this->hasNoSongs) return;
+	if (this->isRunning) return;
+
+	log::info("length: {}", this->sounds.size());
+
+	int id;
+	if (newSong) {
+		// im sure this will be fine, right?
+		if (this->sounds.size() == 1) id = 0;
+		else do {
+			id = rand() % this->sounds.size();
+		} while (id == this->songID);
+
+		this->startOffset = 0;
+		log::info("new song! id={}", id);
+		this->songID = id;
+		this->history.push_back(id);
+	}
+	else id = this->songID;
+
+	this->playAudio(id);
 }
 
 void AudioManager::stopAudio() {
@@ -185,4 +203,15 @@ void AudioManager::nextSong() {
 
 	  this->stopAudio();
 	  this->playAudio(true);
+}
+
+void AudioManager::prevSong() {
+	if (this->hasNoSongs) return;
+	if (this->history.size() == 0) return;
+
+	this->stopAudio();
+	// this looks like its in the wrong order but that's where you're wrong!
+	this->history.pop_back();
+	this->startOffset = 0;
+	this->playAudio(this->history.back());
 }

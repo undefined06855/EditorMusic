@@ -5,50 +5,49 @@
 #include <Geode/modify/EditorUI.hpp>
 #include <Geode/modify/CCScheduler.hpp>
 #include <Geode/modify/LoadingLayer.hpp>
+#include <Geode/ui/GeodeUI.hpp>
 #include "AudioManager.hpp"
 #include <fmt/core.h>
 #include <fmt/color.h>
 
 using namespace geode::prelude;
 
-AudioManager* audioManager = new AudioManager();
-
 class $modify(LevelEditorLayer) {
 	void onPlaytest() {
 		LevelEditorLayer::onPlaytest();
 
 		log::info("stop music (started playtest)");
-		audioManager->stopAudio();
+		AudioManager::get().stopAudio();
 	}
 
 	void onResumePlaytest() {
 		LevelEditorLayer::onResumePlaytest();
 
 		log::info("stop music (resumed playtest)");
-		audioManager->stopAudio();
+		AudioManager::get().stopAudio();
 	}
 
 	void onPausePlaytest() {
 		LevelEditorLayer::onPausePlaytest();
 
 		log::info("start music quieter (paused playtest)");
-		audioManager->playAudio(false);
-		audioManager->turnDownMusic();
+		AudioManager::get().playAudio(false);
+		AudioManager::get().turnDownMusic();
 	}
 
 	void onStopPlaytest() {
 		LevelEditorLayer::onStopPlaytest();
 
 		log::info("start music (stopped playtest)");
-		audioManager->playAudio(false);
-		audioManager->turnUpMusic();
+		AudioManager::get().playAudio(false);
+		AudioManager::get().turnUpMusic();
 	}
 
 	bool init(GJGameLevel * p0, bool p1) {
 		if (!LevelEditorLayer::init(p0, p1)) return false;
 
 		log::info("start music (entered editor)");
-		audioManager->playAudio(true);
+		AudioManager::get().playAudio(true);
 
 		return true;
 	}
@@ -57,7 +56,7 @@ class $modify(LevelEditorLayer) {
 		LevelEditorLayer::stopPlayback();
 
 		log::info("start music (stopped playback)");
-		audioManager->playAudio(false);
+		AudioManager::get().playAudio(false);
 	}
 };
 
@@ -67,7 +66,7 @@ class $modify(EditorUI) {
 		// EditorUI::onPlayback could run LevelEditorLayer::stopPlayback which will play the audio
 		// and if we stop it now it could already be stopped
 		// bit hard to think of but should work
-		audioManager->stopAudio();
+		AudioManager::get().stopAudio();
 
 		EditorUI::onPlayback(sender);
 	}
@@ -76,18 +75,17 @@ class $modify(EditorUI) {
 class $modify(FunkyEditorPauseLayer, EditorPauseLayer) {
 	void onExitEditor(CCObject* sender) {
 		log::info("stop music (exited editor generic)");
-		audioManager->stopAudio();
+		AudioManager::get().stopAudio();
 
 		EditorPauseLayer::onExitEditor(sender);
 	}
 
 	/*
-	// this (obviously) gets called before the flalertlayer so it's probably not
-	// of much use
+	// this (obviously) gets called before the flalertlayer so it's probably not of much use
 	void onExitNoSave(CCObject* sender) {
 		log::info("stop music (exit)");
-		audioManager->stopAudio();
-		audioManager->onExitEditor();
+		AudioManager::get().stopAudio();
+		AudioManager::get().onExitEditor();
 
 		EditorPauseLayer::onExitNoSave(sender);
 	}
@@ -95,16 +93,16 @@ class $modify(FunkyEditorPauseLayer, EditorPauseLayer) {
 
 	void onSaveAndExit(CCObject* sender) {
 		log::info("stop music (save&exit)");
-		audioManager->stopAudio();
-		audioManager->onExitEditor();
+		AudioManager::get().stopAudio();
+		AudioManager::get().onExitEditor();
 
 		EditorPauseLayer::onSaveAndExit(sender);
 	}
 
 	void onSaveAndPlay(CCObject* sender) {
 		log::info("stop music (save&play)");
-		audioManager->stopAudio();
-		audioManager->onExitEditor();
+		AudioManager::get().stopAudio();
+		AudioManager::get().onExitEditor();
 
 		EditorPauseLayer::onSaveAndPlay(sender);
 	}
@@ -112,14 +110,14 @@ class $modify(FunkyEditorPauseLayer, EditorPauseLayer) {
 	// turn up and down music when pausing
 	static EditorPauseLayer* create(LevelEditorLayer* editor) {
 		log::info("turn down music");
-		audioManager->turnDownMusic();
+		AudioManager::get().turnDownMusic();
 		return EditorPauseLayer::create(editor);
 	}
 
 	void onResume(CCObject* sender) {
 		EditorPauseLayer::onResume(sender);
 		log::info("turn up music");
-		audioManager->turnUpMusic();
+		AudioManager::get().turnUpMusic();
 	}
 
 	bool init(LevelEditorLayer* p0) {
@@ -149,35 +147,58 @@ class $modify(FunkyEditorPauseLayer, EditorPauseLayer) {
 			auto topMenu = this->getChildByIDRecursive("top-menu");
 			if (!topMenu) return true;
 
-			auto song = CCLabelBMFont::create(audioManager->currentSongName.c_str(), "bigFont.fnt");
-			topMenu->addChild(song);
+			auto layer = CCLayer::create();
+			layer->setID("current-song"_spr);
+
+			auto song = CCLabelBMFont::create(AudioManager::get().currentSongName.c_str(), "bigFont.fnt");
+			layer->addChild(song);
 			song->setScale(.35f);
 			song->setID("current-song-title"_spr);
 			song->setPositionX(topMenu->getContentWidth() / 2);
 			song->setPositionY(35.f);
 
 			auto songHeader = CCLabelBMFont::create("Current song:", "bigFont.fnt");
-			topMenu->addChild(songHeader);
+			layer->addChild(songHeader);
 			songHeader->setScale(.27f);
 			songHeader->setID("current-song-header"_spr);
 			songHeader->setPositionX(topMenu->getContentWidth() / 2);
 			songHeader->setPositionY(46.f);
 
 			auto bg = CCScale9Sprite::create("GJ_square01.png");
-			topMenu->addChild(bg);
+			layer->addChild(bg);
 			bg->setContentSize(CCSize{ 185.f, 60.f });
 			bg->setID("current-song-bg"_spr);
 			bg->setPositionX(topMenu->getContentWidth() / 2);
 			bg->setPositionY(45.f);
 			bg->setZOrder(-1);
+
+			auto settingsMenu = CCMenu::create();
+			settingsMenu->setPosition(CCPoint{0.f, 0.f});
+			layer->addChild(settingsMenu);
+
+			auto settingsSprite = CCSprite::createWithSpriteFrameName("GJ_optionsBtn_001.png");
+			settingsSprite->setScale(.275f);
+
+			auto settingsButton = CCMenuItemSpriteExtra::create(settingsSprite, this, menu_selector(FunkyEditorPauseLayer::onSettings));
+			settingsMenu->addChild(settingsButton);
+			settingsButton->setID("editormusic-settings"_spr);
+			settingsButton->setPositionX(topMenu->getContentWidth() / 2 + 80.f);
+			settingsButton->setPositionY(46.f);
+
+			topMenu->addChild(layer);
 		}
 
 		return true;
 	}
 
 	void onNextSong(CCObject* sender) {
-		audioManager->nextSong();
-		audioManager->turnDownMusic(); // pause menu so has to turn down the music!
+		AudioManager::get().nextSong();
+		AudioManager::get().turnDownMusic(); // pause menu so has to turn down the music!
+	}
+
+	
+	void onSettings(CCObject* sender) {
+		openSettingsPopup(Mod::get());
 	}
 };
 
@@ -185,17 +206,19 @@ class $modify(CCScheduler) {
 	void update(float dt) {
 		CCScheduler::update(dt);
 
-		if (audioManager->hasNoSongs) return;
-		audioManager->tick(dt);
+		if (AudioManager::get().hasNoSongs) return;
+		AudioManager::get().tick(dt);
 
 		// damn this is a lot of indentation
 		if (auto levelEditor = LevelEditorLayer::get()) {
 			if (auto pauseLayer = static_cast<EditorPauseLayer*>(levelEditor->getChildByID("EditorPauseLayer"))) {
 				if (auto topMenu = static_cast<CCMenu*>(pauseLayer->getChildByID("top-menu"))) {
-					if (auto songTitle = static_cast<CCLabelBMFont*>(topMenu->getChildByID("current-song-title"_spr))) {
-						if (songTitle->getString() == audioManager->currentSongName.c_str()) return;
+					if (auto songTitleWrapper = static_cast<CCLayer*>(topMenu->getChildByID("current-song"_spr))) {
+						if (auto songTitle = static_cast<CCLabelBMFont*>(songTitleWrapper->getChildByID("current-song-title"_spr))) {
+							if (songTitle->getString() == AudioManager::get().currentSongName.c_str()) return;
 
-						songTitle->setString(audioManager->currentSongName.c_str());
+							songTitle->setString(AudioManager::get().currentSongName.c_str());
+						}
 					}
 				}
 			}
@@ -207,7 +230,7 @@ class $modify(MenuLayer) {
 	bool init() {
 		if (!MenuLayer::init()) return false;
 
-		if (audioManager->hasNoSongs) {
+		if (AudioManager::get().hasNoSongs) {
 			auto alert = FLAlertLayer::create(
 				"Message from EditorMusic",
 				"You have no songs in your config folder! Press the pencil icon next to the mod config to access the folder, where you can place music. See the mod description for more details.",
@@ -218,7 +241,7 @@ class $modify(MenuLayer) {
 			alert->show();
 		}
 
-		if (audioManager->customPathDoesntExist) {
+		if (AudioManager::get().customPathDoesntExist) {
 			auto alert = FLAlertLayer::create(
 				"Message from EditorMusic",
 				"The custom path you provided does not exist! If you don't have a custom path, set the setting to \"(none)\"",
@@ -236,5 +259,5 @@ class $modify(MenuLayer) {
 $execute {
 	// so silly
 	log::info("{}", fmt::styled("=============== AudioManager loading!! ===============", fg(fmt::rgb(0x4287f5)) | bg(fmt::rgb(0xFF0000))));
-	audioManager->setup();
+	AudioManager::get().setup();
 }

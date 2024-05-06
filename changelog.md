@@ -1,4 +1,7 @@
 # EditorMusic
+## v1.2.0
+- Keybinds!
+- Quick settings in the pause menu
 ## v1.1.2
 - Bugfixes (this is probably the most bugfixes I've had to do in a mod)
 - Custom song path
