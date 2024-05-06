@@ -15,8 +15,7 @@ jobs:
         - name: Windows
           os: windows-latest
 
-        # fails because of fmod stuff
-        # if someone can fix that would be great thanks
+        # missing bindings for editorpauselayer (the exit ones)
         #- name: macOS
         #  os: macos-latest
 
@@ -37,6 +36,7 @@ jobs:
       - name: Build the mod
         uses: geode-sdk/build-geode-mod@main
         with:
+          sdk: nightly
           bindings: undefined06855/bindings
           bindings-ref: main
           combine: true
