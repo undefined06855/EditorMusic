@@ -15,8 +15,9 @@ jobs:
         - name: Windows
           os: windows-latest
 
-        - name: macOS
-          os: macos-latest
+        # missing bindings for editorpauselayer (the exit ones)
+        #- name: macOS
+        #  os: macos-latest
 
         - name: Android32
           os: ubuntu-latest
