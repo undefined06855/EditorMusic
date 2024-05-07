@@ -17,21 +17,21 @@ class $modify(LevelEditorLayer) {
 		LevelEditorLayer::onPlaytest();
 
 		log::info("stop music (started playtest)");
-		AudioManager::get().stopAudio();
+		AudioManager::get().pause();
 	}
 
 	void onResumePlaytest() {
 		LevelEditorLayer::onResumePlaytest();
 
 		log::info("stop music (resumed playtest)");
-		AudioManager::get().stopAudio();
+		AudioManager::get().pause();
 	}
 
 	void onPausePlaytest() {
 		LevelEditorLayer::onPausePlaytest();
 
 		log::info("start music quieter (paused playtest)");
-		AudioManager::get().playAudio(false);
+		AudioManager::get().play();
 		AudioManager::get().turnDownMusic();
 	}
 
@@ -39,7 +39,7 @@ class $modify(LevelEditorLayer) {
 		LevelEditorLayer::onStopPlaytest();
 
 		log::info("start music (stopped playtest)");
-		AudioManager::get().playAudio(false);
+		AudioManager::get().play();
 		AudioManager::get().turnUpMusic();
 	}
 
@@ -47,7 +47,7 @@ class $modify(LevelEditorLayer) {
 		if (!LevelEditorLayer::init(p0, p1)) return false;
 
 		log::info("start music (entered editor)");
-		AudioManager::get().playAudio(true);
+		AudioManager::get().playNewSong();
 
 		return true;
 	}
@@ -56,7 +56,7 @@ class $modify(LevelEditorLayer) {
 		LevelEditorLayer::stopPlayback();
 
 		log::info("start music (stopped playback)");
-		AudioManager::get().playAudio(false);
+		AudioManager::get().play();
 	}
 };
 
@@ -66,7 +66,7 @@ class $modify(EditorUI) {
 		// EditorUI::onPlayback could run LevelEditorLayer::stopPlayback which will play the audio
 		// and if we stop it now it could already be stopped
 		// bit hard to think of but should work
-		AudioManager::get().stopAudio();
+		AudioManager::get().pause();
 
 		EditorUI::onPlayback(sender);
 	}
@@ -75,7 +75,7 @@ class $modify(EditorUI) {
 class $modify(FunkyEditorPauseLayer, EditorPauseLayer) {
 	void onExitEditor(CCObject* sender) {
 		log::info("stop music (exited editor generic)");
-		AudioManager::get().stopAudio();
+		AudioManager::get().pause();
 
 		EditorPauseLayer::onExitEditor(sender);
 	}
@@ -84,8 +84,7 @@ class $modify(FunkyEditorPauseLayer, EditorPauseLayer) {
 	// this (obviously) gets called before the flalertlayer so it's probably not of much use
 	void onExitNoSave(CCObject* sender) {
 		log::info("stop music (exit)");
-		AudioManager::get().stopAudio();
-		AudioManager::get().onExitEditor();
+		AudioManager::get()._pause();
 
 		EditorPauseLayer::onExitNoSave(sender);
 	}
@@ -93,16 +92,14 @@ class $modify(FunkyEditorPauseLayer, EditorPauseLayer) {
 
 	void onSaveAndExit(CCObject* sender) {
 		log::info("stop music (save&exit)");
-		AudioManager::get().stopAudio();
-		AudioManager::get().onExitEditor();
+		AudioManager::get().pause();
 
 		EditorPauseLayer::onSaveAndExit(sender);
 	}
 
 	void onSaveAndPlay(CCObject* sender) {
 		log::info("stop music (save&play)");
-		AudioManager::get().stopAudio();
-		AudioManager::get().onExitEditor();
+		AudioManager::get().pause();
 
 		EditorPauseLayer::onSaveAndPlay(sender);
 	}
@@ -192,7 +189,7 @@ class $modify(FunkyEditorPauseLayer, EditorPauseLayer) {
 	}
 
 	void onNextSong(CCObject* sender) {
-		AudioManager::get().nextSong();
+		AudioManager::get().playNewSong();
 		AudioManager::get().turnDownMusic(); // pause menu so has to turn down the music!
 	}
 

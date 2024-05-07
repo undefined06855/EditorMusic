@@ -88,6 +88,7 @@ void AudioManager::setupFromOneFolder(ghc::filesystem::path path) {
 
 void AudioManager::setup() {
 	this->setupFromOneFolder(Mod::get()->getConfigDir());
+	// csp == custom song path
 	std::string csp = Mod::get()->getSettingValue<std::string>("extra-songs-path");
 
 	if (csp != "(none)") {
@@ -116,71 +117,12 @@ void AudioManager::setup() {
 	this->channel->setMode(FMOD_LOOP_OFF);
 }
 
-void AudioManager::playAudio(int id) {
-	if (this->hasNoSongs) return;
-	if (this->isRunning) return;
-
-	auto sound = this->sounds.at(id);
-
-	this->system->playSound(sound, nullptr, false, &(this->channel));
-	this->turnUpMusic();
-	this->isRunning = true;
-	log::info("offset: {}ms", this->startOffset);
-	this->channel->setPosition(this->startOffset, FMOD_TIMEUNIT_MS);
-
-	this->currentSongName = this->songNames.at(id);
-	log::info("current song name: {}", this->currentSongName);
-}
-
-void AudioManager::playAudio(bool newSong) {
-	if (this->hasNoSongs) return;
-	if (this->isRunning) return;
-
-	log::info("length: {}", this->sounds.size());
-
-	int id;
-	if (newSong) {
-		// im sure this will be fine, right?
-		if (this->sounds.size() == 1) id = 0;
-		else do {
-			id = rand() % this->sounds.size();
-		} while (id == this->songID);
-
-		this->startOffset = 0;
-		log::info("new song! id={}", id);
-		this->songID = id;
-		this->history.push_back(id);
-	}
-	else id = this->songID;
-
-	this->playAudio(id);
-}
-
-void AudioManager::stopAudio() {
-	if (this->hasNoSongs) return;
-
-	// PLEASE can someone submit a pr that adds fading to this thanks
-	if (!this->isRunning) return;
-
-	this->channel->getPosition(&(this->startOffset), FMOD_TIMEUNIT_MS);
-	log::info("new start offset: {}", this->startOffset);
-
-	this->channel->stop();
-	this->isRunning = false;
-}
-
 void AudioManager::turnDownMusic() const {
 	this->channel->setVolume(0.5f * Mod::get()->getSettingValue<double>("volume"));
 }
-
 void AudioManager::turnUpMusic() const {
 	this->channel->setVolume(Mod::get()->getSettingValue<double>("volume"));
 }
-
-void AudioManager::onExitEditor() {
-	this->startOffset = 0;
-}
-
 void AudioManager::tick(float dt) {
 	if (this->hasNoSongs) return;
 
@@ -194,24 +136,63 @@ void AudioManager::tick(float dt) {
 	if (!isPlaying && this->isRunning) {
 		log::info("song finished?");
 		this->isRunning = false;
-		this->playAudio(true);
+		this->playNewSong();
 	}
 }
 
-void AudioManager::nextSong() {
-	  if (this->hasNoSongs) return;
+void AudioManager::playSongID(int id) {
+	log::info("playing song with id {}", id);
+	this->songID = id;
+	this->history.push_back(id);
 
-	  this->stopAudio();
-	  this->playAudio(true);
+	this->channel->stop();
+	this->channel->setPaused(false);
+
+	auto sound = this->sounds.at(id);
+
+	this->system->playSound(sound, nullptr, false, &(this->channel));
+	this->turnUpMusic();
+	this->isRunning = true;
+
+	this->currentSongName = this->songNames.at(id);
+	log::info("new song name: {}", this->currentSongName);
+}
+
+void AudioManager::playNewSong() {
+	if (this->hasNoSongs) return;
+
+	// im sure this will be fine, right?
+	int id;
+	if (this->sounds.size() == 1) id = 0;
+	else do {
+		id = rand() % this->sounds.size();
+	} while (id == this->songID);
+
+	this->playSongID(id);
+}
+
+void AudioManager::pause() {
+	if (this->hasNoSongs) return;
+	this->channel->setPaused(true);
+}
+
+void AudioManager::play() {
+	if (this->hasNoSongs) return;
+	this->channel->setPaused(false);
+}
+
+void AudioManager::nextSong() {
+	if (this->hasNoSongs) return;
+	this->playNewSong();
 }
 
 void AudioManager::prevSong() {
 	if (this->hasNoSongs) return;
-	if (this->history.size() == 0) return;
+	log::info("size: {}", this->history.size());
+	if (this->history.size() <= 1) return; // this looks wrong but it's not dw
 
-	this->stopAudio();
 	// this looks like its in the wrong order but that's where you're wrong!
 	this->history.pop_back();
-	this->startOffset = 0;
-	this->playAudio(this->history.back());
+	this->playSongID(this->history.back());
+	this->history.pop_back(); // call pop_back again bc previous song gets added again in this->playSongID
 }

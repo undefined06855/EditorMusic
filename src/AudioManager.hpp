@@ -20,7 +20,6 @@ public:
 
 	FMOD::Channel* channel;
 	FMOD::System* system = FMODAudioEngine::sharedEngine()->m_system;
-	unsigned int startOffset = 0;
 	int songID;
 	std::vector<int> history = {};
 	bool hasNoSongs = false;
@@ -30,13 +29,16 @@ public:
 
 	void setup();
 	void setupFromOneFolder(ghc::filesystem::path path);
-	void playAudio(bool newSong);
-	void playAudio(int id);
-	void stopAudio();
+
 	void turnDownMusic() const;
 	void turnUpMusic() const;
-	void onExitEditor();
+
 	void tick(float dt);
+
+	void pause();
+	void play();
+	void playNewSong();
+	void playSongID(int id);
 	void nextSong();
 	void prevSong();
 };

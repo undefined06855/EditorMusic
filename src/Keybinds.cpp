@@ -14,12 +14,14 @@ class $modify(LevelEditorLayer) {
 			if (event->isDown()) {
 				log::info("Mute");
 				auto am = AudioManager::get();
-				if (am.isRunning) {
-					log::info("am running");
-					am.stopAudio();
+				bool paused;
+				am.channel->getPaused(&paused);
+				if (paused) {
+					log::info("keybind: mute (paused) ----v");
+					am.play();
 				} else {
-					log::info("am not running");
-					am.playAudio(false);
+					log::info("keybind: mute (not paused) ----v");
+					am.pause();
 				}
 			}
 
@@ -29,7 +31,7 @@ class $modify(LevelEditorLayer) {
 		// Next
 		this->template addEventListener<InvokeBindFilter>([=](InvokeBindEvent* event) {
 			if (event->isDown()) {
-				log::info("next song");
+				log::info("keybind: next song ----v");
 				AudioManager::get().nextSong();
 			}
 
@@ -39,7 +41,7 @@ class $modify(LevelEditorLayer) {
 		// Prev
 		this->template addEventListener<InvokeBindFilter>([=](InvokeBindEvent* event) {
 			if (event->isDown()) {
-				log::info("prev song");
+				log::info("keybind: prev song ----v");
 				AudioManager::get().prevSong();
 			}
 
