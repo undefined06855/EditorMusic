@@ -56,7 +56,3 @@ build-*/
 
 # Visual Studio
 .vs/
-
-
-# Custom additions:
-src/Keybinds.hpp
