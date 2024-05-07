@@ -139,6 +139,25 @@ class $modify(FunkyEditorPauseLayer, EditorPauseLayer) {
 			smallActionsMenu->updateLayout();
 		}
 
+		// prev song
+		if (Mod::get()->getSettingValue<bool>("prev-song")) {
+			auto smallActionsMenu = this->getChildByID("small-actions-menu");
+
+			auto spr = ButtonSprite::create(
+				"Prev.\nSong", 30, 0, .4f, true,
+				"bigFont.fnt", "GJ_button_04.png", 30.f
+			);
+			spr->setScale(.8f);
+
+			auto nextSongButton = CCMenuItemSpriteExtra::create(
+				spr, this, menu_selector(FunkyEditorPauseLayer::onPrevSong)
+			);
+			nextSongButton->setID("next-song-btn"_spr);
+			smallActionsMenu->insertAfter(nextSongButton, nullptr);
+
+			smallActionsMenu->updateLayout();
+		}
+
 		// current song
 		if (Mod::get()->getSettingValue<bool>("current-song")) {
 			auto topMenu = this->getChildByIDRecursive("top-menu");
@@ -190,6 +209,11 @@ class $modify(FunkyEditorPauseLayer, EditorPauseLayer) {
 
 	void onNextSong(CCObject* sender) {
 		AudioManager::get().playNewSong();
+		AudioManager::get().turnDownMusic(); // pause menu so has to turn down the music!
+	}
+
+	void onPrevSong(CCObject* sender) {
+		AudioManager::get().prevSong();
 		AudioManager::get().turnDownMusic(); // pause menu so has to turn down the music!
 	}
 

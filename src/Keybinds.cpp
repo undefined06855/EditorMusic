@@ -1,3 +1,6 @@
+// there must be a better way to do this
+#ifndef GEODE_IS_ANDROID:
+
 #include <Geode/Geode.hpp>
 #include <Geode/modify/LevelEditorLayer.hpp>
 #include "AudioManager.hpp"
@@ -79,3 +82,5 @@ $execute {
 		Category::EDITOR
 	});
 }
+
+#endif

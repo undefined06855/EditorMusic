@@ -43,6 +43,11 @@
 			"type": "bool",
 			"default": true
 		},
+		"prev-song": {
+			"name": "Show previous song button in editor",
+			"type": "bool",
+			"default": false
+		},
 		"unnamed-song-fallback": {
 			"name": "Use filename for unnamed songs (req. restart)",
 			"type": "bool",
