@@ -155,7 +155,25 @@ void AudioManager::playSongID(int id) {
 	this->isRunning = true;
 
 	this->currentSongName = this->songNames.at(id);
+	
+	float scale = .35f * (30.f / this->currentSongName.length());
+	if (scale > .35f) scale = .35f;
+	this->desiredScale = scale;
+	
 	log::info("new song name: {}", this->currentSongName);
+	log::info("new desiredScale: {}", this->desiredScale);
+	
+	if (auto levelEditorLayer = CCDirector::get()->getRunningScene()->getChildByID("LevelEditorLayer")) {
+		if (auto editorPauseLayer = levelEditorLayer->getChildByID("EditorPauseLayer")) {
+			if (auto topMenu = editorPauseLayer->getChildByID("top-menu")) {
+				if (auto currentSongLayer = topMenu->getChildByID("current-song"_spr)) {
+					if (auto currentSongTitle = currentSongLayer->getChildByID("current-song-title"_spr)){
+						currentSongTitle->setScale(this->desiredScale);
+					}
+				}
+			}
+		}
+	}
 }
 
 void AudioManager::playNewSong() {

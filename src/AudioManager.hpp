@@ -26,6 +26,8 @@ public:
 	bool customPathDoesntExist = false;
 	bool isRunning = false;
 	std::string currentSongName = "";
+	
+	float desiredScale = 1.f;
 
 	void setup();
 	void setupFromOneFolder(ghc::filesystem::path path);
