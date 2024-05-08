@@ -13,4 +13,4 @@ This literally just adds music to the editor, which pauses when playtesting and 
 
 
 
-*(Geometry Dash/geode/config/undefined0.editormusic, or press the pencil icon in the bottom right corner when the mod is installed.)
+*(Geometry Dash/geode/config/undefined0.editormusic, or press the pencil icon in the bottom left corner when the mod is installed.)
