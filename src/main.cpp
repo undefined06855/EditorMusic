@@ -122,7 +122,7 @@ class $modify(FunkyEditorPauseLayer, EditorPauseLayer) {
 
 		// skip song
 		if (Mod::get()->getSettingValue<bool>("skip-song")) {
-			auto smallActionsMenu = this->getChildByID("small-actions-menu");
+			auto smallActionsMenu = getChildByID("small-actions-menu");
 
 			auto spr = ButtonSprite::create(
 				"Next\nSong", 30, 0, .4f, true,
@@ -141,7 +141,7 @@ class $modify(FunkyEditorPauseLayer, EditorPauseLayer) {
 
 		// prev song
 		if (Mod::get()->getSettingValue<bool>("prev-song")) {
-			auto smallActionsMenu = this->getChildByID("small-actions-menu");
+			auto smallActionsMenu = getChildByID("small-actions-menu");
 
 			auto spr = ButtonSprite::create(
 				"Prev.\nSong", 30, 0, .4f, true,
@@ -160,35 +160,38 @@ class $modify(FunkyEditorPauseLayer, EditorPauseLayer) {
 
 		// current song
 		if (Mod::get()->getSettingValue<bool>("current-song")) {
-			auto topMenu = this->getChildByIDRecursive("top-menu");
+			auto topMenu = getChildByIDRecursive("top-menu");
 			if (!topMenu) return true;
+			
+			auto audioManager = AudioManager::get();
 
 			auto layer = CCLayer::create();
 			layer->setID("current-song"_spr);
 
-			auto song = CCLabelBMFont::create(AudioManager::get().currentSongName.c_str(), "bigFont.fnt");
-			layer->addChild(song);
-			song->setScale(.35f);
-			song->setID("current-song-title"_spr);
-			song->setPositionX(topMenu->getContentWidth() / 2);
-			song->setPositionY(35.f);
+			auto songTitle = CCLabelBMFont::create(audioManager.currentSongName.c_str(), "bigFont.fnt");
+			songTitle->setScale(audioManager.desiredScale);
+			songTitle->setID("current-song-title"_spr);
+			songTitle->setPositionX(topMenu->getContentWidth() / 2);
+			songTitle->setPositionY(35.f);
+			layer->addChild(songTitle);
 
 			auto songHeader = CCLabelBMFont::create("Current song:", "bigFont.fnt");
-			layer->addChild(songHeader);
 			songHeader->setScale(.27f);
 			songHeader->setID("current-song-header"_spr);
 			songHeader->setPositionX(topMenu->getContentWidth() / 2);
 			songHeader->setPositionY(46.f);
+			layer->addChild(songHeader);
 
 			auto bg = CCScale9Sprite::create("GJ_square01.png");
-			layer->addChild(bg);
-			bg->setContentSize(CCSize{ 185.f, 60.f });
+			bg->setContentSize(CCSize{ 215.f, 60.f });
 			bg->setID("current-song-bg"_spr);
 			bg->setPositionX(topMenu->getContentWidth() / 2);
 			bg->setPositionY(45.f);
 			bg->setZOrder(-1);
+			layer->addChild(bg);
 
 			auto settingsMenu = CCMenu::create();
+			settingsMenu->setID("editormusic-menu"_spr);
 			settingsMenu->setPosition(CCPoint{0.f, 0.f});
 			layer->addChild(settingsMenu);
 
@@ -196,10 +199,10 @@ class $modify(FunkyEditorPauseLayer, EditorPauseLayer) {
 			settingsSprite->setScale(.275f);
 
 			auto settingsButton = CCMenuItemSpriteExtra::create(settingsSprite, this, menu_selector(FunkyEditorPauseLayer::onSettings));
-			settingsMenu->addChild(settingsButton);
 			settingsButton->setID("editormusic-settings"_spr);
-			settingsButton->setPositionX(topMenu->getContentWidth() / 2 + 80.f);
+			settingsButton->setPositionX(bg->getContentWidth() + 20.f);
 			settingsButton->setPositionY(46.f);
+			settingsMenu->addChild(settingsButton);
 
 			topMenu->addChild(layer);
 		}
@@ -237,8 +240,7 @@ class $modify(CCScheduler) {
 					if (auto songTitleWrapper = static_cast<CCLayer*>(topMenu->getChildByID("current-song"_spr))) {
 						if (auto songTitle = static_cast<CCLabelBMFont*>(songTitleWrapper->getChildByID("current-song-title"_spr))) {
 							if (songTitle->getString() == AudioManager::get().currentSongName.c_str()) return;
-
-							songTitle->setString(AudioManager::get().currentSongName.c_str());
+							else songTitle->setString(AudioManager::get().currentSongName.c_str());
 						}
 					}
 				}
