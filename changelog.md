@@ -2,7 +2,7 @@
 ## v1.3.0
 - Slightly wider menu (raydeeux)
 - Dynamic song label scaling, after much pestering from Capeling (raydeeux)
-- Song info dialog!
+- Song info dialog (Suggested and mockup created by NonCloud9)
 ## v1.2.1
 - Fix android not being able to update
 ## v1.2.0
