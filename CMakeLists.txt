@@ -10,6 +10,7 @@ set(GEODE_REVERT_TODO_RETURN ON)
 project(EditorMusic VERSION 1.0.0)
 
 add_library(${PROJECT_NAME} SHARED
+    src/AudioInfoPopup.cpp
     src/AudioManager.cpp
     src/main.cpp
     src/Keybinds.cpp

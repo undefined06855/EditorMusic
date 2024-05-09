@@ -62,7 +62,7 @@ $execute {
 		"mute-song"_spr,
 		"Mute",
 		"Mutes and pauses the current song",
-		{ Keybind::create(KEY_M, Modifier::Control) },
+		{ Keybind::create(KEY_P) },
 		Category::EDITOR
 	});
 

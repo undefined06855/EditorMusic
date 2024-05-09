@@ -2,7 +2,6 @@
 #include <codecvt>
 #include <regex>
 
-AudioManager::AudioManager() {}
 AudioManager& AudioManager::get() {
 	static AudioManager instance;
 	return instance;
@@ -149,6 +148,8 @@ void AudioManager::playSongID(int id) {
 	this->channel->setPaused(false);
 
 	auto sound = this->sounds.at(id);
+	sound->getLength(&(this->currentSongLength), FMOD_TIMEUNIT_MS);
+	log::info("curSongLength: {}", this->currentSongLength);
 
 	this->system->playSound(sound, nullptr, false, &(this->channel));
 	this->turnUpMusic();
@@ -156,24 +157,18 @@ void AudioManager::playSongID(int id) {
 
 	this->currentSongName = this->songNames.at(id);
 	
+	// calculate new scales
 	float scale = .35f * (30.f / this->currentSongName.length());
 	if (scale > .35f) scale = .35f;
 	this->desiredScale = scale;
+
+	float popupScale = .47f * (30.f / this->currentSongName.length());
+	if (popupScale > .47f) popupScale = .47;
+	this->desiredPopupScale = popupScale;
 	
 	log::info("new song name: {}", this->currentSongName);
-	log::info("new desiredScale: {}", this->desiredScale);
-	
-	if (auto levelEditorLayer = CCDirector::get()->getRunningScene()->getChildByID("LevelEditorLayer")) {
-		if (auto editorPauseLayer = levelEditorLayer->getChildByID("EditorPauseLayer")) {
-			if (auto topMenu = editorPauseLayer->getChildByID("top-menu")) {
-				if (auto currentSongLayer = topMenu->getChildByID("current-song"_spr)) {
-					if (auto currentSongTitle = currentSongLayer->getChildByID("current-song-title"_spr)){
-						currentSongTitle->setScale(this->desiredScale);
-					}
-				}
-			}
-		}
-	}
+	log::info("new desiredScale (top menu): {}", this->desiredScale);
+	log::info("new desiredScale (popup): {}", this->desiredPopupScale);
 }
 
 void AudioManager::playNewSong() {
@@ -213,4 +208,22 @@ void AudioManager::prevSong() {
 	this->history.pop_back();
 	this->playSongID(this->history.back());
 	this->history.pop_back(); // call pop_back again bc previous song gets added again in this->playSongID
+}
+
+// used for sliders
+float AudioManager::getSongPercentage() {
+	unsigned int curPos;
+	this->channel->getPosition(&curPos, FMOD_TIMEUNIT_MS);
+	return curPos / this->currentSongLength;
+}
+
+int AudioManager::getSongMS() {
+	unsigned int curPos;
+	this->channel->getPosition(&curPos, FMOD_TIMEUNIT_MS);
+	return curPos;
+}
+
+// also used for sliders
+void AudioManager::setSongPercentage(float percentage) {
+	this->channel->setPosition(static_cast<unsigned int>(percentage * this->currentSongLength), FMOD_TIMEUNIT_MS);
 }

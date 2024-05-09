@@ -4,7 +4,7 @@ using namespace geode::prelude;
 
 class AudioManager {
 private:
-	AudioManager();
+	AudioManager() {};
 protected:
 	std::unordered_set<std::string> extensions = {
 		".mp3",
@@ -26,8 +26,10 @@ public:
 	bool customPathDoesntExist = false;
 	bool isRunning = false;
 	std::string currentSongName = "";
+	unsigned int currentSongLength = 0;
 	
 	float desiredScale = 1.f;
+	float desiredPopupScale = 1.f;
 
 	void setup();
 	void setupFromOneFolder(ghc::filesystem::path path);
@@ -43,4 +45,8 @@ public:
 	void playSongID(int id);
 	void nextSong();
 	void prevSong();
+
+	float getSongPercentage();
+	int getSongMS();
+	void setSongPercentage(float);
 };

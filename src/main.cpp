@@ -5,8 +5,8 @@
 #include <Geode/modify/EditorUI.hpp>
 #include <Geode/modify/CCScheduler.hpp>
 #include <Geode/modify/LoadingLayer.hpp>
-#include <Geode/ui/GeodeUI.hpp>
 #include "AudioManager.hpp"
+#include "AudioInfoPopup.hpp"
 #include <fmt/core.h>
 #include <fmt/color.h>
 
@@ -31,7 +31,7 @@ class $modify(LevelEditorLayer) {
 		LevelEditorLayer::onPausePlaytest();
 
 		log::info("start music quieter (paused playtest)");
-		AudioManager::get().play();
+		AudioManager::get().play(); // make sure if the user pauses song dont override it
 		AudioManager::get().turnDownMusic();
 	}
 
@@ -39,7 +39,7 @@ class $modify(LevelEditorLayer) {
 		LevelEditorLayer::onStopPlaytest();
 
 		log::info("start music (stopped playtest)");
-		AudioManager::get().play();
+		AudioManager::get().play(); // same here
 		AudioManager::get().turnUpMusic();
 	}
 
@@ -56,7 +56,7 @@ class $modify(LevelEditorLayer) {
 		LevelEditorLayer::stopPlayback();
 
 		log::info("start music (stopped playback)");
-		AudioManager::get().play();
+		AudioManager::get().play(); // and here
 	}
 };
 
@@ -122,7 +122,7 @@ class $modify(FunkyEditorPauseLayer, EditorPauseLayer) {
 
 		// skip song
 		if (Mod::get()->getSettingValue<bool>("skip-song")) {
-			auto smallActionsMenu = getChildByID("small-actions-menu");
+			auto smallActionsMenu = this->getChildByID("small-actions-menu");
 
 			auto spr = ButtonSprite::create(
 				"Next\nSong", 30, 0, .4f, true,
@@ -141,7 +141,7 @@ class $modify(FunkyEditorPauseLayer, EditorPauseLayer) {
 
 		// prev song
 		if (Mod::get()->getSettingValue<bool>("prev-song")) {
-			auto smallActionsMenu = getChildByID("small-actions-menu");
+			auto smallActionsMenu = this->getChildByID("small-actions-menu");
 
 			auto spr = ButtonSprite::create(
 				"Prev.\nSong", 30, 0, .4f, true,
@@ -160,7 +160,7 @@ class $modify(FunkyEditorPauseLayer, EditorPauseLayer) {
 
 		// current song
 		if (Mod::get()->getSettingValue<bool>("current-song")) {
-			auto topMenu = getChildByIDRecursive("top-menu");
+			auto topMenu = this->getChildByIDRecursive("top-menu");
 			if (!topMenu) return true;
 			
 			auto audioManager = AudioManager::get();
@@ -195,13 +195,12 @@ class $modify(FunkyEditorPauseLayer, EditorPauseLayer) {
 			settingsMenu->setPosition(CCPoint{0.f, 0.f});
 			layer->addChild(settingsMenu);
 
-			auto settingsSprite = CCSprite::createWithSpriteFrameName("GJ_optionsBtn_001.png");
-			settingsSprite->setScale(.275f);
+			auto settingsSprite = CCSprite::createWithSpriteFrameName("GJ_menuBtn_001.png");
+			settingsSprite->setScale(.325f);
 
 			auto settingsButton = CCMenuItemSpriteExtra::create(settingsSprite, this, menu_selector(FunkyEditorPauseLayer::onSettings));
 			settingsButton->setID("editormusic-settings"_spr);
-			settingsButton->setPositionX(bg->getContentWidth() + 20.f);
-			settingsButton->setPositionY(46.f);
+			settingsButton->setPosition(CCPoint{ 235.f, 45.f });
 			settingsMenu->addChild(settingsButton);
 
 			topMenu->addChild(layer);
@@ -220,9 +219,8 @@ class $modify(FunkyEditorPauseLayer, EditorPauseLayer) {
 		AudioManager::get().turnDownMusic(); // pause menu so has to turn down the music!
 	}
 
-	
 	void onSettings(CCObject* sender) {
-		openSettingsPopup(Mod::get());
+		AudioInfoPopup::create()->show();
 	}
 };
 
@@ -235,16 +233,22 @@ class $modify(CCScheduler) {
 
 		// damn this is a lot of indentation
 		if (auto levelEditor = LevelEditorLayer::get()) {
-			if (auto pauseLayer = static_cast<EditorPauseLayer*>(levelEditor->getChildByID("EditorPauseLayer"))) {
-				if (auto topMenu = static_cast<CCMenu*>(pauseLayer->getChildByID("top-menu"))) {
-					if (auto songTitleWrapper = static_cast<CCLayer*>(topMenu->getChildByID("current-song"_spr))) {
+			if (auto pauseLayer = levelEditor->getChildByID("EditorPauseLayer")) {
+				if (auto topMenu = pauseLayer->getChildByID("top-menu")) {
+					if (auto songTitleWrapper = topMenu->getChildByID("current-song"_spr)) {
 						if (auto songTitle = static_cast<CCLabelBMFont*>(songTitleWrapper->getChildByID("current-song-title"_spr))) {
-							if (songTitle->getString() == AudioManager::get().currentSongName.c_str()) return;
-							else songTitle->setString(AudioManager::get().currentSongName.c_str());
+							// the check here was broken so it was removed if anyone remembers one here
+
+							songTitle->setString(AudioManager::get().currentSongName.c_str());
+							songTitle->setScale(AudioManager::get().desiredScale);
 						}
 					}
 				}
 			}
+		}
+
+		if (auto infoPopup = static_cast<AudioInfoPopup*>(CCScene::get()->getChildByID("audio-info-popup"_spr))) {
+			infoPopup->tick();
 		}
 	}
 };

@@ -1,7 +1,8 @@
 # EditorMusic
-## v1.2.2
-- Slightly wider menu
-- Dynamic song label scaling, after much pestering from Capeling
+## v1.3.0
+- Slightly wider menu (raydeeux)
+- Dynamic song label scaling, after much pestering from Capeling (raydeeux)
+- Song info dialog!
 ## v1.2.1
 - Fix android not being able to update
 ## v1.2.0

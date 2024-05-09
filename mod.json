@@ -1,10 +1,10 @@
 {
-	"geode": "2.0.0-beta.25",
+	"geode": "2.0.0-beta.26",
 	"gd": {
 		"win": "2.204",
 		"android": "2.205"
 	},
-	"version": "v1.2.2",
+	"version": "v1.3.0",
 	"id": "undefined0.editormusic",
 	"name": "EditorMusic",
 	"developer": "undefined0",
@@ -38,8 +38,6 @@
 				"input": true,
 				"big-arrows": false,
 				"arrows": false,
-				"big-arrow-step": 0,
-				"arrow-step": 0,
 				"slider-step": 0.001
 			}
 		},
