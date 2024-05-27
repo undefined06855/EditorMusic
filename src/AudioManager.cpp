@@ -11,7 +11,7 @@ void AudioManager::setupFromOneFolder(ghc::filesystem::path path) {
 	for (const auto& file : std::filesystem::directory_iterator(path.string())) {
 		std::filesystem::path path = file.path();
 
-		if (this->extensions.contains(path.extension().string())) {
+		if (this->extensions.contains(path.extension().string()) && std::filesystem::is_regular_file(path)) {
 			// create the sounds!
 			FMOD::Sound* sound;
 			this->system->createSound(path.string().c_str(), FMOD_LOOP_NORMAL, nullptr, &sound);
@@ -24,11 +24,9 @@ void AudioManager::setupFromOneFolder(ghc::filesystem::path path) {
 			FMOD_RESULT res;
 			if (path.extension().string() == ".mp3") {
 				res = sound->getTag("TIT2", 0, &tag);
-			}
-			else if (path.extension().string() == ".wav") {
+			} else if (path.extension().string() == ".wav") {
 				res = sound->getTag("INAM", 0, &tag);
-			}
-			else if (path.extension().string() == ".ogg" || path.extension().string() == ".flac") {
+			} else if (path.extension().string() == ".ogg" || path.extension().string() == ".flac") {
 				res = sound->getTag("TITLE", 0, &tag);
 			}
 
@@ -44,6 +42,8 @@ void AudioManager::setupFromOneFolder(ghc::filesystem::path path) {
 				continue;
 			}
 
+			log::debug("Song has a name in metadata");
+
 			std::string songName;
 			const char* songNameAsChar = reinterpret_cast<const char*>(tag.data);
 
@@ -51,8 +51,7 @@ void AudioManager::setupFromOneFolder(ghc::filesystem::path path) {
 				log::debug("Song name is in utf16");
 				std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> converter;
 				songName = converter.to_bytes(reinterpret_cast<const char16_t*>(songNameAsChar));
-			}
-			else if (tag.datatype == FMOD_TAGDATATYPE_STRING_UTF16BE) {
+			} else if (tag.datatype == FMOD_TAGDATATYPE_STRING_UTF16BE) {
 				log::debug("Song name is in utf16 but big endian (very silly)");
 				// silly big endian
 				std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> converter;
@@ -63,24 +62,16 @@ void AudioManager::setupFromOneFolder(ghc::filesystem::path path) {
 				}
 				// cha cha real smooth
 				songName = converter.to_bytes(utf16String);
-			}
-			else {
+			} else {
 				log::debug("Song name is in utf8");
 				songName = std::string(songNameAsChar, tag.datalen);
 			}
 
-			// filter out stuff like the poorly parsed BOM
-			log::debug("Song name before: {}", songName);
-			std::regex charsInBigFont("[^\u0020\u0021\u0022\u0023\u0024\u0025\u0026\u0027\u0028\u0029\u002a\u002b\u002c\u002d\u002e\u002f\u0030\u0031\u0032\u0033\u0034\u0035\u0036\u0037\u0038\u0039\u003a\u003b\u003c\u003d\u003e\u003f\u0040\u0041\u0042\u0043\u0044\u0045\u0046\u0047\u0048\u0049\u004a\u004b\u004c\u004d\u004e\u004f\u0050\u0051\u0052\u0053\u0054\u0055\u0056\u0057\u0058\u0059\u005a\u005b\u005c\u005d\u005e\u005f\u0060\u0061\u0062\u0063\u0064\u0065\u0066\u0067\u0068\u0069\u006a\u006b\u006c\u006d\u006e\u006f\u0070\u0071\u0072\u0073\u0074\u0075\u0076\u0077\u0078\u0079\u007a\u007b\u007c\u007d\u007e\u2022]+");
-			songName = std::regex_replace(songName, charsInBigFont, "");
-
 			this->songNames.push_back(songName);
-			log::debug("Song name after: {}", songName);
-
+			
 			log::info("Loaded song {}!", songName);
-		}
-		else {
-			log::warn("Unsupported file extension found in config dir: {} (from {})", path.extension().string(), path.filename().string());
+		} else {
+			log::warn("Unsupported file extension or folder found in config dir: {} (from {})", path.extension().string(), path.filename().string());
 		}
 	}
 }
@@ -96,8 +87,7 @@ void AudioManager::setup() {
 		if (ghc::filesystem::exists(customPath)) {
 			log::info("Custom path exists! Loading from it...");
 			this->setupFromOneFolder(customPath);
-		}
-		else {
+		} else {
 			log::warn("Custom path doesn't exist!");
 			this->customPathDoesntExist = true;
 		}
@@ -140,6 +130,9 @@ void AudioManager::tick(float dt) {
 }
 
 void AudioManager::playSongID(int id) {
+	// filter for stuff like the BOM or whatever goofy unicode characters artists put in the song titles (WHY DOES MDK PUT A MUSIC NOTE?? IT'S NOT NEEDED)
+	std::regex charsInBigFont("[^\u0020\u0021\u0022\u0023\u0024\u0025\u0026\u0027\u0028\u0029\u002a\u002b\u002c\u002d\u002e\u002f\u0030\u0031\u0032\u0033\u0034\u0035\u0036\u0037\u0038\u0039\u003a\u003b\u003c\u003d\u003e\u003f\u0040\u0041\u0042\u0043\u0044\u0045\u0046\u0047\u0048\u0049\u004a\u004b\u004c\u004d\u004e\u004f\u0050\u0051\u0052\u0053\u0054\u0055\u0056\u0057\u0058\u0059\u005a\u005b\u005c\u005d\u005e\u005f\u0060\u0061\u0062\u0063\u0064\u0065\u0066\u0067\u0068\u0069\u006a\u006b\u006c\u006d\u006e\u006f\u0070\u0071\u0072\u0073\u0074\u0075\u0076\u0077\u0078\u0079\u007a\u007b\u007c\u007d\u007e\u2022]+");
+	
 	log::info("playing song with id {}", id);
 	this->songID = id;
 	this->history.push_back(id);
@@ -156,6 +149,9 @@ void AudioManager::playSongID(int id) {
 	this->isRunning = true;
 
 	this->currentSongName = this->songNames.at(id);
+	log::debug("Song name before: {}", this->currentSongName);
+	this->currentSongName = std::regex_replace(this->currentSongName, charsInBigFont, Mod::get()->getSettingValue<std::string>("unsupported-characters-fallback"));
+	log::debug("Song name after: {}", this->currentSongName);
 	
 	// calculate new scales
 	float scale = .35f * (30.f / this->currentSongName.length());
@@ -171,6 +167,7 @@ void AudioManager::playSongID(int id) {
 	log::info("new desiredScale (popup): {}", this->desiredPopupScale);
 }
 
+// this calls AudioManager::playSongID (with a random id)
 void AudioManager::playNewSong() {
 	if (this->hasNoSongs) return;
 
