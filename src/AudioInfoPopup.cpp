@@ -159,8 +159,8 @@ void AudioInfoPopup::onRw10Sec(CCObject* sender) {
     log::info("it's rewind time");
     unsigned int curPos;
     AudioManager::get().channel->getPosition(&curPos, FMOD_TIMEUNIT_MS);
-    if (curPos < 100000) AudioManager::get().prevSong();
-    else                 AudioManager::get().channel->setPosition(curPos - 10000, FMOD_TIMEUNIT_MS);
+    if (curPos < 10000) AudioManager::get().prevSong();
+    else                AudioManager::get().channel->setPosition(curPos - 10000, FMOD_TIMEUNIT_MS);
 }
 
 void AudioInfoPopup::onFF10Sec(CCObject* sender) {
