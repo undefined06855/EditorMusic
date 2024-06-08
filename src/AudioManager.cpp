@@ -7,7 +7,7 @@ AudioManager& AudioManager::get() {
 	return instance;
 }
 
-void AudioManager::setupFromOneFolder(ghc::filesystem::path path) {
+void AudioManager::setupFromOneFolder(std::filesystem::path path) {
 	for (const auto& file : std::filesystem::directory_iterator(path.string())) {
 		std::filesystem::path path = file.path();
 
@@ -82,9 +82,9 @@ void AudioManager::setup() {
 	std::string csp = Mod::get()->getSettingValue<std::string>("extra-songs-path");
 
 	if (csp != "(none)") {
-		ghc::filesystem::path customPath(csp);
+		std::filesystem::path customPath(csp);
 
-		if (ghc::filesystem::exists(customPath)) {
+		if (std::filesystem::exists(customPath)) {
 			log::info("Custom path exists! Loading from it...");
 			this->setupFromOneFolder(customPath);
 		} else {
