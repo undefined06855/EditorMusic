@@ -32,7 +32,7 @@ public:
 	float desiredPopupScale = 1.f;
 
 	void setup();
-	void setupFromOneFolder(ghc::filesystem::path path);
+	void setupFromOneFolder(std::filesystem::path path);
 
 	void turnDownMusic() const;
 	void turnUpMusic() const;
