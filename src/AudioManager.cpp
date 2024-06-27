@@ -118,7 +118,7 @@ void AudioManager::tick(float dt) {
 	// pause channel if needed
 	this->channel->setPaused(this->isPaused || this->playtestMusicIsPlaying || !this->isInEditor);
 
-	log::info("low pass: {}, paused: {}, playtesting: {}, notInEditor: {}", this->lowPassStrength, this->isPaused, this->playtestMusicIsPlaying, !this->isInEditor);
+	//log::info("low pass: {}, paused: {}, playtesting: {}, notInEditor: {}", this->lowPassStrength, this->isPaused, this->playtestMusicIsPlaying, !this->isInEditor);
 
 	if (!this->isInEditor) return;
 

@@ -1,4 +1,6 @@
 # EditorMusic
+## v1.3.5
+- Remove a log that logged info every single frame
 ## v1.3.4
 - Geode 3.1.0 support! (this required a rewrite of like everything :sob:)
 - Added togglable low-pass filter
