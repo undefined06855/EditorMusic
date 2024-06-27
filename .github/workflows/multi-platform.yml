@@ -15,8 +15,9 @@ jobs:
         - name: Windows
           os: windows-latest
 
-        - name: macOS
-          os: macos-latest
+        # fmod issues + pauselayer binding issues
+        #- name: macOS
+        #  os: macos-latest
 
         - name: Android32
           os: ubuntu-latest
