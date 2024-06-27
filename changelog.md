@@ -1,10 +1,7 @@
 # EditorMusic
-## v1.3.5
+## v1.3.4
 - Geode 3.1.0 support! (this required a rewrite of like everything :sob:)
 - Added togglable low-pass filter
-## v1.3.4-alpha.1
-- Geode 3.0.0-alpha.1 support
-- Probably very broken
 ## v1.3.3
 - Fix -10s button going to previous song regardless of how long was left
 ## v1.3.2
