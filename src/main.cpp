@@ -2,9 +2,8 @@
 #include <Geode/modify/LevelEditorLayer.hpp>
 #include <Geode/modify/EditorPauseLayer.hpp>
 #include <Geode/modify/MenuLayer.hpp>
-#include <Geode/modify/EditorUI.hpp>
 #include <Geode/modify/CCScheduler.hpp>
-#include <Geode/modify/LoadingLayer.hpp>
+#include <Geode/loader/SettingEvent.hpp>
 #include "AudioManager.hpp"
 #include "AudioInfoPopup.hpp"
 #include <fmt/core.h>
@@ -13,69 +12,21 @@
 using namespace geode::prelude;
 
 class $modify(LevelEditorLayer) {
-	void onPlaytest() {
-		LevelEditorLayer::onPlaytest();
-
-		log::info("stop music (started playtest)");
-		AudioManager::get().pause();
-	}
-
-	void onResumePlaytest() {
-		LevelEditorLayer::onResumePlaytest();
-
-		log::info("stop music (resumed playtest)");
-		AudioManager::get().pause();
-	}
-
-	void onPausePlaytest() {
-		LevelEditorLayer::onPausePlaytest();
-
-		log::info("start music quieter (paused playtest)");
-		AudioManager::get().play(); // make sure if the user pauses song dont override it
-		AudioManager::get().turnDownMusic();
-	}
-
-	void onStopPlaytest() {
-		LevelEditorLayer::onStopPlaytest();
-
-		log::info("start music (stopped playtest)");
-		AudioManager::get().play(); // same here
-		AudioManager::get().turnUpMusic();
-	}
-
 	bool init(GJGameLevel * p0, bool p1) {
 		if (!LevelEditorLayer::init(p0, p1)) return false;
 
-		log::info("start music (entered editor)");
+		log::info("start music (entered editor)\nisInEditor=true");
 		AudioManager::get().playNewSong();
+		AudioManager::get().isInEditor = true;
 
 		return true;
-	}
-
-	void stopPlayback() {
-		LevelEditorLayer::stopPlayback();
-
-		log::info("start music (stopped playback)");
-		AudioManager::get().play(); // and here
-	}
-};
-
-class $modify(EditorUI) {
-	void onPlayback(CCObject * sender) {
-		log::info("Stop music (toggle playback)");
-		// EditorUI::onPlayback could run LevelEditorLayer::stopPlayback which will play the audio
-		// and if we stop it now it could already be stopped
-		// bit hard to think of but should work
-		AudioManager::get().pause();
-
-		EditorUI::onPlayback(sender);
 	}
 };
 
 class $modify(FunkyEditorPauseLayer, EditorPauseLayer) {
 	void onExitEditor(CCObject* sender) {
-		log::info("stop music (exited editor generic)");
-		AudioManager::get().pause();
+		log::info("isInEditor=false");
+		AudioManager::get().isInEditor = false;
 
 		EditorPauseLayer::onExitEditor(sender);
 	}
@@ -91,39 +42,27 @@ class $modify(FunkyEditorPauseLayer, EditorPauseLayer) {
 	*/
 
 	void onSaveAndExit(CCObject* sender) {
-		log::info("stop music (save&exit)");
-		AudioManager::get().pause();
+		log::info("isInEditor=false");
+		AudioManager::get().isInEditor = false;
 
 		EditorPauseLayer::onSaveAndExit(sender);
 	}
 
 	void onSaveAndPlay(CCObject* sender) {
-		log::info("stop music (save&play)");
-		AudioManager::get().pause();
+		log::info("isInEditor=false");
+		AudioManager::get().isInEditor = false;
 
 		EditorPauseLayer::onSaveAndPlay(sender);
 	}
 
-	// turn up and down music when pausing
-	static EditorPauseLayer* create(LevelEditorLayer* editor) {
-		log::info("turn down music");
-		AudioManager::get().turnDownMusic();
-		return EditorPauseLayer::create(editor);
-	}
-
-	void onResume(CCObject* sender) {
-		EditorPauseLayer::onResume(sender);
-		log::info("turn up music");
-		AudioManager::get().turnUpMusic();
-	}
-
+	// shortcuts in pause menu
 	bool init(LevelEditorLayer* p0) {
 		if (!EditorPauseLayer::init(p0)) return false;
+		auto smallActionsMenu = this->getChildByID("small-actions-menu");
+		if (!smallActionsMenu) return true;
 
 		// skip song
 		if (Mod::get()->getSettingValue<bool>("skip-song")) {
-			auto smallActionsMenu = this->getChildByID("small-actions-menu");
-
 			auto spr = ButtonSprite::create(
 				"Next\nSong", 30, 0, .4f, true,
 				"bigFont.fnt", "GJ_button_04.png", 30.f
@@ -141,8 +80,6 @@ class $modify(FunkyEditorPauseLayer, EditorPauseLayer) {
 
 		// prev song
 		if (Mod::get()->getSettingValue<bool>("prev-song")) {
-			auto smallActionsMenu = this->getChildByID("small-actions-menu");
-
 			auto spr = ButtonSprite::create(
 				"Prev.\nSong", 30, 0, .4f, true,
 				"bigFont.fnt", "GJ_button_04.png", 30.f
@@ -211,12 +148,10 @@ class $modify(FunkyEditorPauseLayer, EditorPauseLayer) {
 
 	void onNextSong(CCObject* sender) {
 		AudioManager::get().playNewSong();
-		AudioManager::get().turnDownMusic(); // pause menu so has to turn down the music!
 	}
 
 	void onPrevSong(CCObject* sender) {
 		AudioManager::get().prevSong();
-		AudioManager::get().turnDownMusic(); // pause menu so has to turn down the music!
 	}
 
 	void onSettings(CCObject* sender) {
@@ -287,6 +222,10 @@ $execute {
 	// so silly
 	log::info("{}", fmt::styled("=============== AudioManager loading!! ===============", fg(fmt::rgb(0x4287f5)) | bg(fmt::rgb(0xFF0000))));
 	AudioManager::get().setup();
+
+	listenForSettingChanges("low-pass", +[](bool value) {
+		AudioManager::get().updateLowPassFilter();
+	});
 }
 
 

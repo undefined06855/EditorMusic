@@ -104,27 +104,50 @@ void AudioManager::setup() {
 	this->songID = rand() % this->sounds.size();
 
 	this->channel->setMode(FMOD_LOOP_OFF);
+
+	this->system->createDSPByType(FMOD_DSP_TYPE_LOWPASS, &this->lowPassFilterDSP);
+	this->lowPassFilterDSP->setParameterFloat(FMOD_DSP_LOWPASS_RESONANCE, 0.f);
 }
 
-void AudioManager::turnDownMusic() const {
-	this->channel->setVolume(0.5f * Mod::get()->getSettingValue<double>("volume"));
-}
-void AudioManager::turnUpMusic() const {
-	this->channel->setVolume(Mod::get()->getSettingValue<double>("volume"));
-}
 void AudioManager::tick(float dt) {
 	if (this->hasNoSongs) return;
 
-	// if fading needs to be added it can be added here
-	// and i probably will but i can't be bothered
+	// set playtestmusicisplaying
+	this->playtestMusicIsPlaying = FMODAudioEngine::sharedEngine()->isMusicPlaying(0);
+	//log::info("{}", this->playtestMusicIsPlaying);
+	// pause channel if needed
+	this->channel->setPaused(this->isPaused || this->playtestMusicIsPlaying || !this->isInEditor);
+
+	log::info("low pass: {}, paused: {}, playtesting: {}, notInEditor: {}", this->lowPassStrength, this->isPaused, this->playtestMusicIsPlaying, !this->isInEditor);
+
+	if (!this->isInEditor) return;
+
+	// check for low pass filter
+	int adjustmentForModsThatAddNodes = 0;
+	if (Loader::get()->isModLoaded("dankmeme.globed2")) adjustmentForModsThatAddNodes += 2;
+	if (Loader::get()->isModLoaded("firee.prism")) adjustmentForModsThatAddNodes += 1;
+	if (Loader::get()->isModLoaded("thesillydoggo.qolmod")) adjustmentForModsThatAddNodes += 1;
+
+	bool lowPassHasChanged = false;
+	int lowPassStrengthBefore = this->lowPassStrength;
+	this->lowPassStrength = CCScene::get()->getChildrenCount() - adjustmentForModsThatAddNodes;
+	if (this->lowPassStrength < 0) this->lowPassStrength = 0;
+	if (LevelEditorLayer::get()->getChildByID("EditorPauseLayer")) {
+		this->lowPassStrength++;
+	}
+	if (this->lowPassStrength != lowPassStrengthBefore) lowPassHasChanged = true;
+
+	// and add filter or remove if needed
+	if (lowPassHasChanged) {
+		this->updateLowPassFilter();
+	}
 
 	// check if needs to go to next song
-	bool isPlaying;
-	this->channel->isPlaying(&isPlaying);
-	// so if it's not playing but it should be...
-	if (!isPlaying && this->isRunning) {
-		log::info("song finished?");
-		this->isRunning = false;
+	bool channelIsPlaying;
+	this->channel->isPlaying(&channelIsPlaying);
+	// so if it's not playing and not paused (i.e it should be playing)...
+	if (!channelIsPlaying && !this->isPaused) {
+		log::info("song is probably finished");
 		this->playNewSong();
 	}
 }
@@ -137,16 +160,13 @@ void AudioManager::playSongID(int id) {
 	this->songID = id;
 	this->history.push_back(id);
 
-	this->channel->stop();
-	this->channel->setPaused(false);
-
 	auto sound = this->sounds.at(id);
 	sound->getLength(&(this->currentSongLength), FMOD_TIMEUNIT_MS);
 	log::info("curSongLength: {}", this->currentSongLength);
 
+	this->channel->stop(); // stop current sound
 	this->system->playSound(sound, nullptr, false, &(this->channel));
-	this->turnUpMusic();
-	this->isRunning = true;
+	this->updateLowPassFilter(); // gets removed after playSound for whatever reason
 
 	this->currentSongName = this->songNames.at(id);
 	log::debug("Song name before: {}", this->currentSongName);
@@ -181,16 +201,6 @@ void AudioManager::playNewSong() {
 	this->playSongID(id);
 }
 
-void AudioManager::pause() {
-	if (this->hasNoSongs) return;
-	this->channel->setPaused(true);
-}
-
-void AudioManager::play() {
-	if (this->hasNoSongs) return;
-	this->channel->setPaused(false);
-}
-
 void AudioManager::nextSong() {
 	if (this->hasNoSongs) return;
 	this->playNewSong();
@@ -207,11 +217,29 @@ void AudioManager::prevSong() {
 	this->history.pop_back(); // call pop_back again bc previous song gets added again in this->playSongID
 }
 
+void AudioManager::updateLowPassFilter() {
+	if (!Mod::get()->getSettingValue<bool>("low-pass")) {
+		this->channel->removeDSP(this->lowPassFilterDSP);
+		return;
+	}
+
+	if (this->lowPassStrength > 1) {
+		// add it
+		log::info("adding filter");
+		this->channel->addDSP(0, this->lowPassFilterDSP);
+		this->lowPassFilterDSP->setParameterFloat(FMOD_DSP_LOWPASS_CUTOFF, 1650.f - this->lowPassStrength * 250);
+	} else {
+		log::info("removing filter");
+		// remove it
+		this->channel->removeDSP(this->lowPassFilterDSP);
+	}
+}
+
 // used for sliders
 float AudioManager::getSongPercentage() {
 	unsigned int curPos;
 	this->channel->getPosition(&curPos, FMOD_TIMEUNIT_MS);
-	return curPos / this->currentSongLength;
+	return curPos / (float)this->currentSongLength;
 }
 
 int AudioManager::getSongMS() {

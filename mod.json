@@ -1,10 +1,10 @@
 {
-	"geode": "3.0.0-alpha.1",
+	"geode": "3.1.1",
 	"gd": {
 		"win": "2.206",
 		"android": "2.206"
 	},
-	"version": "v1.3.3-alpha.1",
+	"version": "v1.3.5",
 	"id": "undefined0.editormusic",
 	"name": "EditorMusic",
 	"developer": "undefined0",
@@ -15,14 +15,14 @@
 	"dependencies": [
 		{
 			"id": "geode.node-ids",
-			"version": ">=v1.9.1",
+			"version": ">=1.12.0-beta.2",
 			"importance": "required"
 		},
 		{
 			"id": "geode.custom-keybinds",
-			"version": ">=v1.5.6",
+			"version": ">=v1.6.0-beta.1",
 			"importance": "required",
-			"platforms": [ "windows" ]
+			"platforms": [ "win" ]
 		}
 	],
 
@@ -55,6 +55,12 @@
 			"name": "Show previous song button in editor",
 			"type": "bool",
 			"default": false
+		},
+		"low-pass": {
+			"name": "Enable low-pass filter",
+			"description": "Enable or disable the low-pass filter that makes the sound \"muffled\" when you go deeper into menus.",
+			"type": "bool",
+			"default": true
 		},
 		"unnamed-song-fallback": {
 			"name": "Use filename for unnamed songs (req. restart)",

@@ -1,5 +1,5 @@
 // there must be a better way to do this
-#ifndef GEODE_IS_ANDROID:
+#ifndef GEODE_IS_ANDROID
 
 #include <Geode/Geode.hpp>
 #include <Geode/modify/LevelEditorLayer.hpp>
@@ -15,21 +15,21 @@ class $modify(LevelEditorLayer) {
 		// Mute
 		this->template addEventListener<InvokeBindFilter>([=](InvokeBindEvent* event) {
 			if (event->isDown()) {
-				log::info("Mute");
+				log::info("pause");
 				auto am = AudioManager::get();
 				bool paused;
 				am.channel->getPaused(&paused);
 				if (paused) {
 					log::info("keybind: mute (paused) ----v");
-					am.play();
+					am.isPaused = false;
 				} else {
 					log::info("keybind: mute (not paused) ----v");
-					am.pause();
+					am.isPaused = true;
 				}
 			}
 
 			return ListenerResult::Propagate;
-		}, "mute-song"_spr);
+		}, "pause-song"_spr);
 
 		// Next
 		this->template addEventListener<InvokeBindFilter>([=](InvokeBindEvent* event) {
@@ -59,9 +59,9 @@ $execute {
 	using namespace keybinds;
 
 	BindManager::get()->registerBindable({
-		"mute-song"_spr,
-		"Mute",
-		"Mutes and pauses the current song",
+		"pause-song"_spr,
+		"Pause",
+		"Pauses the current song",
 		{ Keybind::create(KEY_P) },
 		Category::EDITOR
 	});

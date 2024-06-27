@@ -132,18 +132,15 @@ void AudioInfoPopup::onSettingsButton(CCObject* sender) {
 
 void AudioInfoPopup::onPlayPause(CCObject* sender) {
     log::info("play / pause");
-    bool amIsPaused;
-    AudioManager::get().channel->getPaused(&amIsPaused);
 
     auto btn = static_cast<CCMenuItemSpriteExtra*>(this->btnMenu->getChildByID("play-pause-btn"_spr));
-
-    if (amIsPaused) {
-        log::info("was paused");
-        AudioManager::get().play();
+    if (AudioManager::get().isPaused) {
+        log::info("isPaused=false");
+        AudioManager::get().isPaused = false;
         btn->setSprite(CCSprite::createWithSpriteFrameName("GJ_pauseBtn_001.png"));
     } else {
-        log::info("was playing");
-        AudioManager::get().pause();
+        log::info("isPaused=true");
+        AudioManager::get().isPaused = true;
         btn->setSprite(CCSprite::createWithSpriteFrameName("GJ_playMusicBtn_001.png"));
     }
 

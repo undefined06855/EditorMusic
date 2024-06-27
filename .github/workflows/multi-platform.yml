@@ -15,9 +15,8 @@ jobs:
         - name: Windows
           os: windows-latest
 
-        # missing bindings for editorpauselayer (the exit ones)
-        #- name: macOS
-        #  os: macos-latest
+        - name: macOS
+          os: macos-latest
 
         - name: Android32
           os: ubuntu-latest
@@ -36,8 +35,8 @@ jobs:
       - name: Build the mod
         uses: geode-sdk/build-geode-mod@main
         with:
-          sdk: nightly
           combine: true
+          bindings: undefined06855/bindings
           target: ${{ matrix.config.target }}
 
   package:

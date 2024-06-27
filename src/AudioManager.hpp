@@ -24,23 +24,25 @@ public:
 	std::vector<int> history = {};
 	bool hasNoSongs = false;
 	bool customPathDoesntExist = false;
-	bool isRunning = false;
+	bool isPaused = false;
+	bool playtestMusicIsPlaying = false;
+	bool isInEditor = false;
 	std::string currentSongName = "";
 	unsigned int currentSongLength = 0;
-	
+	int lowPassStrength = 0;
+
+	FMOD::DSP* lowPassFilterDSP;
+
 	float desiredScale = 1.f;
 	float desiredPopupScale = 1.f;
 
 	void setup();
 	void setupFromOneFolder(std::filesystem::path path);
 
-	void turnDownMusic() const;
-	void turnUpMusic() const;
-
 	void tick(float dt);
 
-	void pause();
-	void play();
+	void updateLowPassFilter();
+
 	void playNewSong();
 	void playSongID(int id);
 	void nextSong();
