@@ -195,8 +195,7 @@ class $modify(MenuLayer) {
 		if (AudioManager::get().hasNoSongs) {
 			auto alert = FLAlertLayer::create(
 				"Message from EditorMusic",
-				"You have no songs in your config folder! 
- See the mod description for more details on how to access the music folder (or set your own custom folder)",
+				"You have no songs in your config folder! See the mod description for more details on how to access the music folder (or set your own custom folder)",
 				"OK"
 			);
 
