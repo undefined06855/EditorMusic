@@ -2,6 +2,16 @@
 #include <Geode/Geode.hpp>
 using namespace geode::prelude;
 
+struct UnloadedAudio {
+	std::filesystem::path path;
+};
+
+struct LoadedAudio {
+	FMOD::Sound* sound;
+	std::string name;
+	unsigned int length;
+};
+
 class AudioManager {
 private:
 	AudioManager() {};
@@ -15,8 +25,8 @@ protected:
 public:
 	static AudioManager& get();
 
-	std::vector<FMOD::Sound*> sounds;
-	std::vector<std::string> songNames;
+	std::vector<UnloadedAudio> songs;
+	LoadedAudio song;
 
 	FMOD::Channel* channel;
 	FMOD::System* system = FMODAudioEngine::sharedEngine()->m_system;
@@ -27,9 +37,9 @@ public:
 	bool isPaused = false;
 	bool playtestMusicIsPlaying = false;
 	bool isInEditor = false;
-	std::string currentSongName = "";
-	unsigned int currentSongLength = 0;
 	int lowPassStrength = 0;
+	float actualLowPassCutoff = 0;
+	float volume = 0; // volume should start at zero so it fades in
 
 	FMOD::DSP* lowPassFilterDSP;
 

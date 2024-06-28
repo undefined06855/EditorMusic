@@ -164,13 +164,13 @@ void AudioInfoPopup::onFF10Sec(CCObject* sender) {
     log::info("fast forward");
     unsigned int curPos;
     AudioManager::get().channel->getPosition(&curPos, FMOD_TIMEUNIT_MS);
-    if (curPos > AudioManager::get().currentSongLength - 10000) AudioManager::get().playNewSong();
-    else                                                        AudioManager::get().channel->setPosition(curPos + 10000, FMOD_TIMEUNIT_MS);
+    if (curPos > AudioManager::get().song.length - 10000) AudioManager::get().playNewSong();
+    else                                                  AudioManager::get().channel->setPosition(curPos + 10000, FMOD_TIMEUNIT_MS);
 }
 
 void AudioInfoPopup::tick() {
     auto songTitle = static_cast<CCLabelBMFont*>(this->m_mainLayer->getChildByID("song-label"_spr));
-    songTitle->setString(AudioManager::get().currentSongName.c_str());
+    songTitle->setString(AudioManager::get().song.name.c_str());
     songTitle->setScale(AudioManager::get().desiredPopupScale);
 
     auto lengthString = static_cast<CCLabelBMFont*>(this->m_mainLayer->getChildByID("length-label"_spr));
@@ -178,7 +178,7 @@ void AudioInfoPopup::tick() {
         fmt::format(
             "{}/{}",
             Utils::formatTime(static_cast<int>(AudioManager::get().getSongMS() / 1000)).c_str(),
-            Utils::formatTime(static_cast<int>(AudioManager::get().currentSongLength / 1000)).c_str()
+            Utils::formatTime(static_cast<int>(AudioManager::get().song.length / 1000)).c_str()
         ).c_str()
     );
 }

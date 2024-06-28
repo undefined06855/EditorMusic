@@ -63,13 +63,13 @@
 			"default": true
 		},
 		"unnamed-song-fallback": {
-			"name": "Use filename for unnamed songs (req. restart)",
+			"name": "Use filename for unnamed songs",
 			"type": "bool",
 			"default": true,
 			"description": "If this is enabled, it uses the file name for unnamed songs instead of your preference."
 		},
 		"unnamed-song-fallback-custom": {
-			"name": "Unnamed song fallback name (req. restart)",
+			"name": "Unnamed song fallback name",
 			"type": "string",
 			"default": "(unnamed song)"
 		},
@@ -83,7 +83,7 @@
 		"unsupported-characters-fallback": {
 			"name": "Unsupported character fallback",
 			"type": "string",
-			"default": "?",
+			"default": "",
 			"description": "Unsupported characters are replaced by this chosen character. Set to blank to just remove the character.",
 			"filter": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/\\:;.,-_(){}[]!$£ %^&#~@=+"
 		}

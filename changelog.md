@@ -1,4 +1,7 @@
 # EditorMusic
+## v1.3.6
+- Change the text for how to get to mod config folder
+- Add fading for volume as well as low-pass filter to prevent popping (and make it sound nice)
 ## v1.3.5
 - Remove a log that logged info every single frame
 ## v1.3.4

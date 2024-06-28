@@ -105,7 +105,7 @@ class $modify(FunkyEditorPauseLayer, EditorPauseLayer) {
 			auto layer = CCLayer::create();
 			layer->setID("current-song"_spr);
 
-			auto songTitle = CCLabelBMFont::create(audioManager.currentSongName.c_str(), "bigFont.fnt");
+			auto songTitle = CCLabelBMFont::create(audioManager.song.name.c_str(), "bigFont.fnt");
 			songTitle->setScale(audioManager.desiredScale);
 			songTitle->setID("current-song-title"_spr);
 			songTitle->setPositionX(topMenu->getContentWidth() / 2);
@@ -174,7 +174,7 @@ class $modify(CCScheduler) {
 						if (auto songTitle = static_cast<CCLabelBMFont*>(songTitleWrapper->getChildByID("current-song-title"_spr))) {
 							// the check here was broken so it was removed if anyone remembers one here
 
-							songTitle->setString(AudioManager::get().currentSongName.c_str());
+							songTitle->setString(AudioManager::get().song.name.c_str());
 							songTitle->setScale(AudioManager::get().desiredScale);
 						}
 					}
