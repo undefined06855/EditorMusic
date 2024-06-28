@@ -4,13 +4,13 @@
 		"win": "2.206",
 		"android": "2.206"
 	},
-	"version": "v1.3.5",
+	"version": "v1.3.6",
 	"id": "undefined0.editormusic",
 	"name": "EditorMusic",
 	"developer": "undefined0",
 	"description": "music in your editor, what's not to like?",
 	"repository": "https://github.com/undefined06855/EditorMusic",
-	"tags": [ "editor", "enhancement" ],
+	"tags": [ "editor", "music", "enhancement" ],
 
 	"dependencies": [
 		{
