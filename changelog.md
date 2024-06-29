@@ -1,4 +1,7 @@
 # EditorMusic
+## v1.3.7
+- Small fixes on how metadata is read (see #16)
+- I should've really made v1.3.6 and v1.3.4 major changes but whatever
 ## v1.3.6
 - Change the text for how to get to mod config folder
 - Add fading for volume as well as low-pass filter to prevent popping (and make it sound nice)

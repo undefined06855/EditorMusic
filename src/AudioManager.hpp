@@ -53,6 +53,8 @@ public:
 
 	void updateLowPassFilter();
 
+	std::string figureOutFallbackName(UnloadedAudio unloadedSong);
+
 	void playNewSong();
 	void playSongID(int id);
 	void nextSong();

@@ -27,7 +27,7 @@ Ease::Ease(float start, float end, double duration, float* target, const std::fu
 }
 
 void Ease::tick(float dt) {
-	log::info("Tick from {} to {}", this->step, this->step + dt);
+	log::debug("Tick from {} to {}", this->step, this->step + dt);
 
 	this->step += dt;
 
@@ -55,9 +55,9 @@ void Ease::tick(float dt) {
 
 class $modify(CCScheduler) {
 	void update(float dt) {
+		CCScheduler::update(dt);
 		for (auto ease : eases) {
 			ease->tick(dt);
 		}
-		CCScheduler::update(dt);
 	}
 };
