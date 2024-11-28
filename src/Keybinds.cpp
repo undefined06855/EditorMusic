@@ -3,8 +3,8 @@
 
 #include <Geode/Geode.hpp>
 #include <Geode/modify/LevelEditorLayer.hpp>
+#include <geode.custom-keybinds/include/Keybinds.hpp>
 #include "AudioManager.hpp"
-#include "Keybinds.hpp"
 
 class $modify(LevelEditorLayer) {
 	bool init(GJGameLevel* p0, bool p1) {

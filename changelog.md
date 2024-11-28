@@ -1,4 +1,7 @@
 # EditorMusic
+## v1.3.9
+- Geode 4.0.0 / GD 2.2074 support!
+- Other bugfixes with text sizes and custom keybinds
 ## v1.3.8
 - Fix stupid stupidness on the about.md
 ## v1.3.7

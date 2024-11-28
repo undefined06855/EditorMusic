@@ -43,9 +43,6 @@ public:
 
 	FMOD::DSP* lowPassFilterDSP;
 
-	float desiredScale = 1.f;
-	float desiredPopupScale = 1.f;
-
 	void setup();
 	void setupFromOneFolder(std::filesystem::path path);
 
