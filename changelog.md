@@ -1,4 +1,6 @@
 # EditorMusic
+## v1.3.10
+- idk i think i fixed something relating to v1.3.9??? maybe??
 ## v1.3.9
 - General bugfixes for crashes relating to the "Show current song in editor" setting
 ## v1.3.8
