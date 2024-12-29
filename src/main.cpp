@@ -219,28 +219,9 @@ class $modify(MenuLayer) {
 };
 
 $execute {
-	// so silly
-	log::info("{}", fmt::styled("=============== AudioManager loading!! ===============", fg(fmt::rgb(0x4287f5)) | bg(fmt::rgb(0xFF0000))));
 	AudioManager::get().setup();
 
 	listenForSettingChanges("low-pass", +[](bool value) {
 		AudioManager::get().updateLowPassFilter();
 	});
 }
-
-
-// filter out debug logs
-// also breaks stuff but ignore that
-
-//void vlogImpl(Severity severity, Mod* mod, fmt::string_view format, fmt::format_args args) {
-//	if (severity == Severity::Debug) return;
-//	std::cout << mod->getID() << std::endl;
-//	geode::log::vlogImpl(severity, mod, format, args);
-//}
-//
-//$on_mod(Loaded) {
-//	(void)geode::Mod::get()->hook(
-//		(void*)geode::addresser::getNonVirtual(&geode::log::vlogImpl),
-//		&vlogImpl, "geode::log::vlogImpl", tulip::hook::TulipConvention::Cdecl
-//	);
-//}

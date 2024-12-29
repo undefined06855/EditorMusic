@@ -1,30 +1,33 @@
 {
-	"geode": "3.2.0",
+	"geode": "4.0.1",
 	"gd": {
-		"win": "2.206",
-		"android": "2.206"
+		"win": "2.2074",
+		"android": "2.2074"
 	},
 	"version": "v1.3.8",
 	"id": "undefined0.editormusic",
 	"name": "EditorMusic",
 	"developer": "undefined0",
 	"description": "music in your editor, what's not to like?",
-	"repository": "https://github.com/undefined06855/EditorMusic",
 	"tags": [ "editor", "music", "enhancement" ],
 
 	"dependencies": [
 		{
 			"id": "geode.node-ids",
-			"version": ">=1.12.0-beta.2",
+			"version": ">=1.17.0",
 			"importance": "required"
 		},
 		{
 			"id": "geode.custom-keybinds",
-			"version": ">=v1.6.0-beta.1",
+			"version": ">=v1.10.0",
 			"importance": "required",
 			"platforms": [ "win" ]
 		}
 	],
+
+	"links": {
+		"source": "https://github.com/undefined06855/EditorMusic"
+	},
 
 	"settings": {
 		"volume": {
