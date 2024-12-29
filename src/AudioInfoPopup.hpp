@@ -10,7 +10,7 @@ public:
 
 	CCMenu* btnMenu;
 
-	void tick();
+	void update(float dt);
 
 	// button moment
 	void onPrevBtn(CCObject* sender);

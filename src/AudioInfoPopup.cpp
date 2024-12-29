@@ -111,6 +111,7 @@ bool AudioInfoPopup::setup() {
     fastfButton->setPosition(CCPoint{ 40.f, -40.f });
     this->btnMenu->addChild(fastfButton);
 
+    this->scheduleUpdate();
 
     this->setID("audio-info-popup"_spr);
     return true;
@@ -169,7 +170,7 @@ void AudioInfoPopup::onFF10Sec(CCObject* sender) {
     else                                                  AudioManager::get().channel->setPosition(curPos + 10000, FMOD_TIMEUNIT_MS);
 }
 
-void AudioInfoPopup::tick() {
+void AudioInfoPopup::update(float dt) {
     auto songTitle = static_cast<CCLabelBMFont*>(this->m_mainLayer->getChildByID("song-label"_spr));
     songTitle->setString(AudioManager::get().song.name.c_str());
     songTitle->limitLabelWidth(237.f, 1.f, .2f);

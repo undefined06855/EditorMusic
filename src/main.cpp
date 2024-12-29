@@ -170,14 +170,12 @@ class $modify(CCScheduler) {
 
 		if (auto levelEditor = LevelEditorLayer::get()) {
 			if (auto pauseLayer = levelEditor->getChildByID("EditorPauseLayer")) {
-				auto label = static_cast<FunkyEditorPauseLayer*>(pauseLayer)->m_fields->currentSongLabel;
+				if (!typeinfo_cast<FunkyEditorPauseLayer*>(pauseLayer)) return;
+				auto label = typeinfo_cast<FunkyEditorPauseLayer*>(pauseLayer)->m_fields->currentSongLabel;
+				if (!label) return;
 				label->setString(AudioManager::get().song.name.c_str());
 				label->limitLabelWidth(170.f, 1.f, .2f);
 			}
-		}
-
-		if (auto infoPopup = static_cast<AudioInfoPopup*>(CCScene::get()->getChildByID("audio-info-popup"_spr))) {
-			infoPopup->tick();
 		}
 	}
 };
