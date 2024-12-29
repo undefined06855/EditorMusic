@@ -14,19 +14,22 @@
 	"dependencies": [
 		{
 			"id": "geode.node-ids",
-			"version": ">=1.17.0",
+			"version": "1.18.0",
 			"importance": "required"
 		},
 		{
 			"id": "geode.custom-keybinds",
-			"version": ">=v1.10.0",
-			"importance": "required",
-			"platforms": [ "win" ]
+			"version": "1.10.0",
+			"importance": "required"
 		}
 	],
-
+	
 	"links": {
 		"source": "https://github.com/undefined06855/EditorMusic"
+	},
+
+	"resources": {
+		"sprites": [ "./resources/*.png" ]
 	},
 
 	"settings": {
@@ -78,10 +81,9 @@
 		},
 		"extra-songs-path": {
 			"name": "Extra songs path (req. restart)",
-			"type": "string",
+			"type": "folder",
 			"description": "If this is set to a path, EditorMusic will take songs from here as well as the config folder.",
-			"default": "(none)",
-			"filter": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/\\:;.,-_(){}[]!$£ %^&#~@=+"
+			"default": "(none)"
 		},
 		"unsupported-characters-fallback": {
 			"name": "Unsupported character fallback",

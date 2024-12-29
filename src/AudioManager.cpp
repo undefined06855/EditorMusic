@@ -24,12 +24,9 @@ void AudioManager::setupFromOneFolder(std::filesystem::path path) {
 
 void AudioManager::setup() {
 	this->setupFromOneFolder(Mod::get()->getConfigDir());
-	// csp == custom song path
-	std::string csp = Mod::get()->getSettingValue<std::string>("extra-songs-path");
+	std::filesystem::path customPath = Mod::get()->getSettingValue<std::filesystem::path>("extra-songs-path");
 
-	if (csp != "(none)") {
-		std::filesystem::path customPath(csp);
-
+	if (customPath.string() != "(none)") {
 		if (std::filesystem::exists(customPath)) {
 			log::info("Custom path exists! Loading from it...");
 			this->setupFromOneFolder(customPath);
@@ -70,13 +67,9 @@ void AudioManager::tick(float dt) {
 	if (!this->isInEditor) return;
 
 	// check for low pass filter
-	int adjustmentForModsThatAddNodes = 0;
-	if (Loader::get()->isModLoaded("dankmeme.globed2")) adjustmentForModsThatAddNodes += 2;
-	if (Loader::get()->isModLoaded("firee.prism")) adjustmentForModsThatAddNodes += 1;
-	if (Loader::get()->isModLoaded("thesillydoggo.qolmod")) adjustmentForModsThatAddNodes += 1;
-
+	int nodesAlreadyPresent = SceneManager::get()->getPersistedNodes().size();
 	int lowPassStrengthBefore = this->lowPassStrength;
-	this->lowPassStrength = CCScene::get()->getChildrenCount() - adjustmentForModsThatAddNodes;
+	this->lowPassStrength = CCScene::get()->getChildrenCount() - nodesAlreadyPresent;
 	if (this->lowPassStrength < 0) this->lowPassStrength = 0;
 	if (LevelEditorLayer::get()->getChildByID("EditorPauseLayer")) {
 		this->lowPassStrength++;
@@ -151,38 +144,36 @@ void AudioManager::playSongID(int id) {
 	const char* songNameAsChar = reinterpret_cast<const char*>(tag.data);
 
 	switch (tag.datatype) {
-	case FMOD_TAGDATATYPE_STRING_UTF16:
-	{
-		log::debug("Song name is in utf16");
-		std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> converter;
-		songName = converter.to_bytes(reinterpret_cast<const char16_t*>(songNameAsChar));
-		break;
-	}
-
-	case FMOD_TAGDATATYPE_STRING_UTF16BE:
-	{
-		log::debug("Song name is in utf16 but big endian (very silly)");
-		// silly big endian
-		std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> converter;
-		std::u16string utf16String(reinterpret_cast<const char16_t*>(songNameAsChar), tag.datalen / sizeof(char16_t));
-		for (size_t i = 0; i < utf16String.size(); ++i) {
-			utf16String[i] = (utf16String[i] << 8) | (utf16String[i] >> 8);
+		case FMOD_TAGDATATYPE_STRING_UTF16: {
+			log::debug("Song name is in utf16");
+			std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> converter;
+			songName = converter.to_bytes(reinterpret_cast<const char16_t*>(songNameAsChar));
+			break;
 		}
-		songName = converter.to_bytes(utf16String);
-		break;
-	}
 
-	case FMOD_TAGDATATYPE_STRING:
-		log::debug("uhh i think this is in utf8");
-	case FMOD_TAGDATATYPE_STRING_UTF8:
-		log::debug("Song name is in utf8 (thanks)");
-		log::debug("raw: {}, length: (datalen:{}, strlen:{})", songNameAsChar, tag.datalen, strlen(songNameAsChar));
-		songName = std::string(songNameAsChar, tag.datalen);
-		break;
-	default:
-		// uhhhh
-		log::info("wtf the song name isnt a string (using fallback)");
-		songName = this->figureOutFallbackName(usong);
+		case FMOD_TAGDATATYPE_STRING_UTF16BE: {
+			log::debug("Song name is in utf16 but big endian (very silly)");
+			// silly big endian
+			std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> converter;
+			std::u16string utf16String(reinterpret_cast<const char16_t*>(songNameAsChar), tag.datalen / sizeof(char16_t));
+			for (size_t i = 0; i < utf16String.size(); ++i) {
+				utf16String[i] = (utf16String[i] << 8) | (utf16String[i] >> 8);
+			}
+			songName = converter.to_bytes(utf16String);
+			break;
+		}
+
+		case FMOD_TAGDATATYPE_STRING:
+			log::debug("uhh i think this is in utf8");
+		case FMOD_TAGDATATYPE_STRING_UTF8:
+			log::debug("Song name is in utf8 (thanks)");
+			log::debug("raw: {}, length: (datalen:{}, strlen:{})", songNameAsChar, tag.datalen, strlen(songNameAsChar));
+			songName = std::string(songNameAsChar, tag.datalen);
+			break;
+		default:
+			// uhhhh
+			log::info("wtf the song name isnt a string (using fallback)");
+			songName = this->figureOutFallbackName(usong);
 	}
 
 	this->song.name = songName;
@@ -201,18 +192,6 @@ void AudioManager::playSongID(int id) {
 	log::debug("Song name before: {}", this->song.name);
 	this->song.name = std::regex_replace(this->song.name, charsInBigFont, Mod::get()->getSettingValue<std::string>("unsupported-characters-fallback"));
 	log::debug("Song name after: {}", this->song.name);
-
-	// calculate new scales
-	float scale = .35f * (30.f / this->song.name.length());
-	if (scale > .35f) scale = .35f;
-	this->desiredScale = scale;
-
-	float popupScale = .47f * (30.f / this->song.name.length());
-	if (popupScale > .47f) popupScale = .47;
-	this->desiredPopupScale = popupScale;
-
-	log::info("new desiredScale (top menu): {}", this->desiredScale);
-	log::info("new desiredScale (popup): {}", this->desiredPopupScale);
 
 	new Ease(0.f, 1.f, 0.5f, &this->volume);
 }

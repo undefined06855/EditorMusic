@@ -3,11 +3,9 @@
 #include <Geode/modify/EditorPauseLayer.hpp>
 #include <Geode/modify/MenuLayer.hpp>
 #include <Geode/modify/CCScheduler.hpp>
-#include <Geode/loader/SettingEvent.hpp>
+#include <Geode/loader/SettingV3.hpp>
 #include "AudioManager.hpp"
 #include "AudioInfoPopup.hpp"
-#include <fmt/core.h>
-#include <fmt/color.h>
 
 using namespace geode::prelude;
 
@@ -24,6 +22,10 @@ class $modify(LevelEditorLayer) {
 };
 
 class $modify(FunkyEditorPauseLayer, EditorPauseLayer) {
+	struct Fields {
+		CCLabelBMFont* currentSongLabel = nullptr;
+	};
+
 	void onExitEditor(CCObject* sender) {
 		log::info("isInEditor=false");
 		AudioManager::get().isInEditor = false;
@@ -105,12 +107,12 @@ class $modify(FunkyEditorPauseLayer, EditorPauseLayer) {
 			auto layer = CCLayer::create();
 			layer->setID("current-song"_spr);
 
-			auto songTitle = CCLabelBMFont::create(audioManager.song.name.c_str(), "bigFont.fnt");
-			songTitle->setScale(audioManager.desiredScale);
-			songTitle->setID("current-song-title"_spr);
-			songTitle->setPositionX(topMenu->getContentWidth() / 2);
-			songTitle->setPositionY(35.f);
-			layer->addChild(songTitle);
+			m_fields->currentSongLabel = CCLabelBMFont::create(audioManager.song.name.c_str(), "bigFont.fnt");
+			m_fields->currentSongLabel->setID("current-song-title"_spr);
+			m_fields->currentSongLabel->setPositionX(topMenu->getContentWidth() / 2);
+			m_fields->currentSongLabel->setPositionY(35.f);
+			m_fields->currentSongLabel->limitLabelWidth(170.f, 1.f, .2f);
+			layer->addChild(m_fields->currentSongLabel);
 
 			auto songHeader = CCLabelBMFont::create("Current song:", "bigFont.fnt");
 			songHeader->setScale(.27f);
@@ -166,19 +168,11 @@ class $modify(CCScheduler) {
 		if (AudioManager::get().hasNoSongs) return;
 		AudioManager::get().tick(dt);
 
-		// damn this is a lot of indentation
 		if (auto levelEditor = LevelEditorLayer::get()) {
 			if (auto pauseLayer = levelEditor->getChildByID("EditorPauseLayer")) {
-				if (auto topMenu = pauseLayer->getChildByID("top-menu")) {
-					if (auto songTitleWrapper = topMenu->getChildByID("current-song"_spr)) {
-						if (auto songTitle = static_cast<CCLabelBMFont*>(songTitleWrapper->getChildByID("current-song-title"_spr))) {
-							// the check here was broken so it was removed if anyone remembers one here
-
-							songTitle->setString(AudioManager::get().song.name.c_str());
-							songTitle->setScale(AudioManager::get().desiredScale);
-						}
-					}
-				}
+				auto label = static_cast<FunkyEditorPauseLayer*>(pauseLayer)->m_fields->currentSongLabel;
+				label->setString(AudioManager::get().song.name.c_str());
+				label->limitLabelWidth(170.f, 1.f, .2f);
 			}
 		}
 
@@ -218,7 +212,7 @@ class $modify(MenuLayer) {
 	}
 };
 
-$execute {
+$on_mod(Loaded) {
 	AudioManager::get().setup();
 
 	listenForSettingChanges("low-pass", +[](bool value) {

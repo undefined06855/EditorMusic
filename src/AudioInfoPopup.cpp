@@ -3,25 +3,36 @@
 #include "AudioManager.hpp"
 #include "Utils.hpp"
 
+AudioInfoPopup* AudioInfoPopup::create() {
+    auto ret = new AudioInfoPopup();
+    if (ret && ret->initAnchored(360.f, 140.f)) {
+        ret->autorelease();
+        return ret;
+    }
+    CC_SAFE_DELETE(ret);
+    return nullptr;
+}
+
 bool AudioInfoPopup::setup() {
-    auto winSize = CCDirector::sharedDirector()->getWinSize();
+    auto popupSize = this->m_mainLayer->getContentSize();
 
     this->setTitle("Current song:");
 
     this->btnMenu = CCMenu::create();
+    this->btnMenu->setPosition(popupSize/2.f);
     this->m_mainLayer->addChild(this->btnMenu);
 
     // also gets set in tick
     auto label = CCLabelBMFont::create("", "bigFont.fnt");
     label->setID("song-label"_spr);
-    label->setPosition(CCPoint{ winSize.width / 2, (winSize.height / 2) + 15.f });
-    label->setScale(AudioManager::get().desiredPopupScale);
+    label->setPosition(CCPoint{ popupSize.width / 2, (popupSize.height / 2) + 15.f });
+    label->limitLabelWidth(237.f, 1.f, .2f);
     this->m_mainLayer->addChild(label);
 
     // this gets set in tick
     auto lengthLabel = CCLabelBMFont::create("", "chatFont.fnt");
     lengthLabel->setID("length-label"_spr);
-    lengthLabel->setPosition(CCPoint{ winSize.width / 2, (winSize.height / 2) - 10.f });
+    lengthLabel->setPosition(CCPoint{ popupSize.width / 2, (popupSize.height / 2) - 10.f });
     lengthLabel->setScale(.725f);
     lengthLabel->setColor(ccColor3B{ 40, 40, 40 });
     this->m_mainLayer->addChild(lengthLabel);
@@ -105,16 +116,6 @@ bool AudioInfoPopup::setup() {
     return true;
 }
 
-AudioInfoPopup* AudioInfoPopup::create() {
-    auto ret = new AudioInfoPopup();
-    if (ret && ret->init(360.f, 140.f)) {
-        ret->autorelease();
-        return ret;
-    }
-    CC_SAFE_DELETE(ret);
-    return nullptr;
-}
-
 void AudioInfoPopup::onPrevBtn(CCObject* sender) {
     log::info("prev");
     AudioManager::get().prevSong();
@@ -171,7 +172,7 @@ void AudioInfoPopup::onFF10Sec(CCObject* sender) {
 void AudioInfoPopup::tick() {
     auto songTitle = static_cast<CCLabelBMFont*>(this->m_mainLayer->getChildByID("song-label"_spr));
     songTitle->setString(AudioManager::get().song.name.c_str());
-    songTitle->setScale(AudioManager::get().desiredPopupScale);
+    songTitle->limitLabelWidth(237.f, 1.f, .2f);
 
     auto lengthString = static_cast<CCLabelBMFont*>(this->m_mainLayer->getChildByID("length-label"_spr));
     lengthString->setString(
