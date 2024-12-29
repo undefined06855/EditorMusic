@@ -1,4 +1,6 @@
 # EditorMusic
+## v1.3.9
+- General bugfixes for crashes relating to the "Show current song in editor" setting
 ## v1.3.8
 - Geode 4.0.0 / GD 2.2074 support!
 - Other bugfixes with text sizes and custom keybinds
