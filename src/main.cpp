@@ -170,7 +170,7 @@ class $modify(CCScheduler) {
 
 		if (auto levelEditor = LevelEditorLayer::get()) {
 			if (auto pauseLayer = levelEditor->getChildByID("EditorPauseLayer")) {
-				auto label = static_cast<FunkyEditorPauseLayer*>(pauseLayer)->m_fields->currentSongLabel;
+				auto label = typeinfo_cast<FunkyEditorPauseLayer*>(pauseLayer)->m_fields->currentSongLabel;
 				if (label) {
 					label->setString(AudioManager::get().song.name.c_str());
 					label->limitLabelWidth(170.f, 1.f, .2f);
