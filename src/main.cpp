@@ -99,17 +99,14 @@ class $modify(FunkyEditorPauseLayer, EditorPauseLayer) {
 
 		// current song
 		if (Mod::get()->getSettingValue<bool>("current-song")) {
-			auto topMenu = this->getChildByIDRecursive("top-menu");
-			if (!topMenu) return true;
-			
 			auto audioManager = AudioManager::get();
 
 			auto layer = CCLayer::create();
 			layer->setID("current-song"_spr);
+			layer->setPosition({ this->getContentWidth() / 2, this->getContentHeight() - 54.f });
 
 			m_fields->currentSongLabel = CCLabelBMFont::create(audioManager.song.name.c_str(), "bigFont.fnt");
 			m_fields->currentSongLabel->setID("current-song-title"_spr);
-			m_fields->currentSongLabel->setPositionX(topMenu->getContentWidth() / 2);
 			m_fields->currentSongLabel->setPositionY(35.f);
 			m_fields->currentSongLabel->limitLabelWidth(170.f, 1.f, .2f);
 			layer->addChild(m_fields->currentSongLabel);
@@ -117,21 +114,19 @@ class $modify(FunkyEditorPauseLayer, EditorPauseLayer) {
 			auto songHeader = CCLabelBMFont::create("Current song:", "bigFont.fnt");
 			songHeader->setScale(.27f);
 			songHeader->setID("current-song-header"_spr);
-			songHeader->setPositionX(topMenu->getContentWidth() / 2);
 			songHeader->setPositionY(46.f);
 			layer->addChild(songHeader);
 
 			auto bg = CCScale9Sprite::create("GJ_square01.png");
 			bg->setContentSize(CCSize{ 215.f, 60.f });
 			bg->setID("current-song-bg"_spr);
-			bg->setPositionX(topMenu->getContentWidth() / 2);
 			bg->setPositionY(45.f);
 			bg->setZOrder(-1);
 			layer->addChild(bg);
 
 			auto settingsMenu = CCMenu::create();
 			settingsMenu->setID("editormusic-menu"_spr);
-			settingsMenu->setPosition(CCPoint{0.f, 0.f});
+			settingsMenu->setPosition({0.f, 0.f});
 			layer->addChild(settingsMenu);
 
 			auto settingsSprite = CCSprite::createWithSpriteFrameName("GJ_menuBtn_001.png");
@@ -139,10 +134,10 @@ class $modify(FunkyEditorPauseLayer, EditorPauseLayer) {
 
 			auto settingsButton = CCMenuItemSpriteExtra::create(settingsSprite, this, menu_selector(FunkyEditorPauseLayer::onSettings));
 			settingsButton->setID("editormusic-settings"_spr);
-			settingsButton->setPosition(CCPoint{ 235.f, 45.f });
+			settingsButton->setPosition({94.f, 43.f});
 			settingsMenu->addChild(settingsButton);
 
-			topMenu->addChild(layer);
+			this->addChild(layer);
 		}
 
 		return true;

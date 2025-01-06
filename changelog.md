@@ -1,4 +1,6 @@
 # EditorMusic
+## v1.3.11
+- Fixed UI in pause layer
 ## v1.3.10
 - idk i think i fixed something relating to v1.3.9??? maybe??
 ## v1.3.9
