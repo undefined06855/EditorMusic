@@ -27,8 +27,6 @@ Ease::Ease(float start, float end, double duration, float* target, const std::fu
 }
 
 void Ease::tick(float dt) {
-	log::debug("Tick from {} to {}", this->step, this->step + dt);
-
 	this->step += dt;
 
 	bool okINeedToDieNow = false;
