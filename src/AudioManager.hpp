@@ -1,63 +1,71 @@
 #pragma once
-#include <Geode/Geode.hpp>
-using namespace geode::prelude;
-
-struct UnloadedAudio {
-	std::filesystem::path path;
-};
-
-struct LoadedAudio {
-	FMOD::Sound* sound;
-	std::string name;
-	unsigned int length;
-};
+#include "AudioSource.hpp"
+#include "Easer.hpp"
+#include "ui/PreloadUI.hpp"
 
 class AudioManager {
-private:
-	AudioManager() {};
-protected:
-	std::unordered_set<std::string> extensions = {
-		".mp3",
-		".wav",
-		".ogg",
-		".flac"
-	};
+    AudioManager();
 public:
-	static AudioManager& get();
+    static AudioManager& get();
+    void init();
 
-	std::vector<UnloadedAudio> songs;
-	LoadedAudio song;
+    std::deque<std::shared_ptr<AudioSource>> m_queue;
+    std::deque<std::shared_ptr<AudioSource>> m_history;
+    int m_queueLength;
+    int m_historyLength;
+    std::vector<std::shared_ptr<AudioSource>> m_songs;
+    bool m_hasZeroSongs;
 
-	FMOD::Channel* channel;
-	FMOD::System* system = FMODAudioEngine::sharedEngine()->m_system;
-	int songID;
-	std::vector<int> history = {};
-	bool hasNoSongs = false;
-	bool customPathDoesntExist = false;
-	bool isPaused = false;
-	bool playtestMusicIsPlaying = false;
-	bool isInEditor = false;
-	int lowPassStrength = 0;
-	float actualLowPassCutoff = 0;
-	float volume = 0; // volume should start at zero so it fades in
+    FMOD::Channel* m_channel;
+	FMOD::System* m_system;
+    float m_volume;
 
-	FMOD::DSP* lowPassFilterDSP;
+    bool m_isPaused;
+    bool m_isInEditor;
+    bool m_isEditorAudioPlaying;
+    bool m_isQueueBeingPopulated;
 
-	void setup();
-	void setupFromOneFolder(std::filesystem::path path);
+    bool m_playCurrentSongQueuedForLoad;
 
-	void tick(float dt);
+    int m_lowPassStrength;
+	FMOD::DSP* m_lowPassFilter;
+    float m_lowPassEasedCutoff;
 
-	void updateLowPassFilter();
+    std::vector<Easer> m_easers;
 
-	std::string figureOutFallbackName(UnloadedAudio unloadedSong);
+    PreloadUI* m_preloadUI;
 
-	void playNewSong();
-	void playSongID(int id);
-	void nextSong();
-	void prevSong();
+    void populateSongs();
+    void populateSongsThread();
+    void setupPreloadUIFromPath(std::filesystem::path path);
+    void populateSongsFromPath(std::filesystem::path path);
+    void populateAudioSourceInfo(std::shared_ptr<AudioSource> source);
+    void populateAlbumCover(std::shared_ptr<AudioSource> source, FMOD_TAG tag);
+    std::string figureOutFallbackName(std::filesystem::path path);
+    std::string filterNameThruRegex(std::string songName);
 
-	float getSongPercentage();
-	int getSongMS();
-	void setSongPercentage(float);
+    void checkQueueLength();
+
+    void nextSong();
+    void prevSong();
+    void goToSongFromQueue(std::shared_ptr<AudioSource> source);
+    void goToSongAndRemakeQueue(std::shared_ptr<AudioSource> source);
+    void goToSongFromHistory(std::shared_ptr<AudioSource> source);
+
+    void update(float dt);
+    void startPlayingCurrentSong();
+    void checkSongPreload();
+
+    std::shared_ptr<AudioSource> getCurrentSong();
+    unsigned int getCurrentSongPosition();
+    unsigned int getCurrentSongLength();
+    bool getCurrentChannelIsPlaying();
+    bool shouldSongBePlaying();
+
+    std::shared_ptr<AudioSource> getRandomSong();
+
+    void updateLowPassFilter();
+
+    void enterEditor();
+    void exitEditor();
 };
