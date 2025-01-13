@@ -4,6 +4,11 @@
 #include <regex>
 #include <locale>
 #include "simdutf.h"
+#include "utils.hpp"
+
+// TODO: some bug somewhere that makes it so songs get added twice?
+// i think to do with prevSong and nextSong or something but idk
+// need to take a look
 
 AudioManager& AudioManager::get() {
     static AudioManager instance;
@@ -33,7 +38,10 @@ AudioManager::AudioManager()
     , m_lowPassEasedCutoff(0)
     , m_lowPassFilter(nullptr)
     
-    , m_easers({}) {}
+    , m_easers({})
+    
+    , m_gen(std::random_device{}())
+    , m_randomSongGenerator(0, 1) {}
 
 void AudioManager::init() {
     geode::log::debug("AudioManager::init()");
@@ -41,6 +49,7 @@ void AudioManager::init() {
     m_system->createDSPByType(FMOD_DSP_TYPE_LOWPASS, &m_lowPassFilter);
 	m_lowPassFilter->setParameterFloat(FMOD_DSP_LOWPASS_RESONANCE, 0.f);
 
+    // i think this fixes stuff but idk not sure
     std::locale::global(std::locale{".utf-8"});
     std::setlocale(LC_ALL, ".utf-8");
 }
@@ -76,6 +85,8 @@ void AudioManager::populateSongsThread() {
     geode::log::info("Finished populating songs!");
     if (m_songs.size() < m_queueLength) m_queueLength = m_songs.size();
     m_isQueueBeingPopulated = false;
+
+    m_randomSongGenerator = std::uniform_int_distribution<int>(0, m_songs.size());
 }
 
 void AudioManager::setupPreloadUIFromPath(std::filesystem::path path) {
@@ -117,94 +128,33 @@ void AudioManager::populateAudioSourceInfo(std::shared_ptr<AudioSource> source) 
     FMOD::Sound* sound;
 	m_system->createSound(source->m_path.string().c_str(), FMOD_OPENONLY, nullptr, &sound);
 
-    // try catch doesnt work on android sometimes but might as well try
-    try {
-
-    // figure out the metadata tag and if it exists
-    FMOD_TAG nameTag;
+    // figure out metadata for name and if it exists
     std::map<std::string, std::string> nameExtensionMap = {
         { ".mp3", "TIT2" },
         { ".wav", "INAM" },
         { ".ogg", "TITLE" },
         { ".flac", "TITLE" }
     };
-    FMOD_RESULT nameRes = sound->getTag(nameExtensionMap[source->m_path.extension().string()].c_str(), 0, &nameTag);
-
-    // ... if it doesnt exist
-    if (nameRes == FMOD_ERR_TAGNOTFOUND) {
-        geode::log::debug("Using fallback, metadata not found");
+    FMOD_TAG nameTag;
+    if (sound->getTag(nameExtensionMap[source->m_path.extension().string()].c_str(), 0, &nameTag) == FMOD_ERR_TAGNOTFOUND) {
+        geode::log::debug("Using fallback, title not found");
         source->m_name = figureOutFallbackName(source->m_path);
-    } else {
-        geode::log::debug("Song has a name in metadata");
+    } else source->m_name = populateStringTag(nameTag, true, source);
 
-        // simdutf::autodetect_encoding does exist but there's no point using it
-        // because it crashes for me trying to read the BOM or whatever and also
-        // since the type is embedded into the tag data anyway as long as
-        // whatever's writing the tag doesnt lie about the data type then it
-        // should be fine
+    // figure out metadata for artist and if it exists
+    std::map<std::string, std::string> artistExtensionMap = {
+        { ".mp3", "TPE1" },
+        { ".wav", "IART" },
+        { ".ogg", "ARTIST" },
+        { ".flac", "ARTIST" }
+    };
+    FMOD_TAG artistTag;
+    if (sound->getTag(artistExtensionMap[source->m_path.extension().string()].c_str(), 0, &artistTag) == FMOD_ERR_TAGNOTFOUND) {
+        geode::log::debug("Using fallback, artist not found");
+        source->m_artist = "Unknown";
+    } else source->m_artist = populateStringTag(artistTag, false);
 
-        // in the utf16 checks it looks like adding one seems to remove the
-        // entire bom even though it's two bytes long? or at least it should be
-        // but well this works
-        // sometimes there's still a null byte even though other songs wont so
-        // in filterSongNameThruRegex there's a null byte remover
-        std::string songName;
-        switch (nameTag.datatype) {
-            case FMOD_TAGDATATYPE_STRING_UTF16: {
-                geode::log::debug("Song name is in utf16");
-                // subtract 2 for bom and null byte, divide by two to get utf8 length
-                int length = nameTag.datalen / 2 - 1;
-                songName.resize(length);
-                const char16_t* tagDataExceptBOM = (char16_t*)nameTag.data + 1;
-
-                simdutf::result res = simdutf::convert_utf16le_to_utf8_with_errors(tagDataExceptBOM, length, songName.data());
-                if (res.error != simdutf::error_code::SUCCESS) {
-                    geode::log::warn("Conversion failed at char {}", res.count);
-                    songName = figureOutFallbackName(source->m_path);
-                }
-
-                break;
-            }
-
-            case FMOD_TAGDATATYPE_STRING_UTF16BE: {
-                geode::log::debug("Song name is in utf16 but big endian (very silly)");
-                // subtract 2 for bom and null byte, divide by two to get utf8 length
-                int length = nameTag.datalen / 2 - 1;
-                songName.resize(length);
-                const char16_t* tagDataExceptBOM = (char16_t*)nameTag.data + 1;
-
-                simdutf::result res = simdutf::convert_utf16be_to_utf8_with_errors(tagDataExceptBOM, length, songName.data());
-                if (res.error != simdutf::error_code::SUCCESS) {
-                    geode::log::warn("Conversion failed at char {}", res.count);
-                    songName = figureOutFallbackName(source->m_path);
-                }
-
-                break;
-            }
-
-            case FMOD_TAGDATATYPE_STRING:
-            case FMOD_TAGDATATYPE_STRING_UTF8: {
-                geode::log::debug("Song name is in utf8");
-                songName = std::string((char*)nameTag.data);
-                break;
-            }
-            
-            default: {
-                // uhhhh
-                geode::log::debug("Song name not in known format, using fallback");
-                songName = figureOutFallbackName(source->m_path);
-            }
-        }
-
-        source->m_name = filterNameThruRegex(songName);
-    }
-
-    } catch(...) {
-        geode::log::warn("Song name failed to be read, but caught");
-        source->m_name = figureOutFallbackName(source->m_path);
-    }
-
-    // only mp3 supported for now
+    // only mp3 covers supported for now
     FMOD_TAG albumCoverTag;
     if (source->m_path.extension().string() == ".mp3") {
         FMOD_RESULT albumRes = sound->getTag("APIC", 0, &albumCoverTag);
@@ -218,9 +168,73 @@ void AudioManager::populateAudioSourceInfo(std::shared_ptr<AudioSource> source) 
     sound->release();
 }
 
+std::string AudioManager::populateStringTag(FMOD_TAG tag, bool useTitleFallback, std::shared_ptr<AudioSource> sourceForFallback) {
+    geode::log::debug("Populating string tag for {}", tag.name);
+    geode::log::NestScope scope;
+
+    // simdutf::autodetect_encoding does exist but there's no point using it
+    // because it crashes for me trying to read the BOM or whatever and also
+    // since the type is embedded into the tag data anyway as long as
+    // whatever's writing the tag doesnt lie about the data type then it
+    // should be fine
+
+    // in the utf16 checks it looks like adding one seems to remove the
+    // entire bom even though it's two bytes long? or at least it should be
+    // but well this works
+    // sometimes there's still a null byte even though other songs wont so
+    // in filterSongNameThruRegex there's a null byte remover
+    switch (tag.datatype) {
+        case FMOD_TAGDATATYPE_STRING_UTF16: {
+            geode::log::debug("Tag is in utf16");
+            // subtract 2 for bom and null byte, divide by two to get utf8 length
+            int length = tag.datalen / 2 - 1;
+            const char16_t* tagDataExceptBOM = (char16_t*)tag.data + 1;
+
+            std::string ret;
+            ret.resize(length);
+            simdutf::result res = simdutf::convert_utf16le_to_utf8_with_errors(tagDataExceptBOM, length, ret.data());
+            if (res.error != simdutf::error_code::SUCCESS) {
+                geode::log::warn("Conversion failed at char {}", res.count);
+                return useTitleFallback ? figureOutFallbackName(sourceForFallback->m_path) : "Unknown";
+            }
+
+            return ret;
+        }
+
+        case FMOD_TAGDATATYPE_STRING_UTF16BE: {
+            geode::log::debug("Tag is in utf16 but big endian (very silly)");
+            // subtract 2 for bom and null byte, divide by two to get utf8 length
+            int length = tag.datalen / 2 - 1;
+            const char16_t* tagDataExceptBOM = (char16_t*)tag.data + 1;
+
+            std::string ret;
+            ret.resize(length);
+            simdutf::result res = simdutf::convert_utf16be_to_utf8_with_errors(tagDataExceptBOM, length, ret.data());
+            if (res.error != simdutf::error_code::SUCCESS) {
+                geode::log::warn("Conversion failed at char {}", res.count);
+                return useTitleFallback ? figureOutFallbackName(sourceForFallback->m_path) : "Unknown";
+            }
+
+            return ret;
+        }
+
+        case FMOD_TAGDATATYPE_STRING:
+        case FMOD_TAGDATATYPE_STRING_UTF8: {
+            geode::log::debug("Tag is in utf8");
+            return std::string((char*)tag.data);
+        }
+        
+        default: {
+            // uhhhh
+            geode::log::debug("Tag not in known format, using fallback");
+            return useTitleFallback ? figureOutFallbackName(sourceForFallback->m_path) : "Unknown";
+        }
+    }
+}
+
 void AudioManager::populateAlbumCover(std::shared_ptr<AudioSource> source, FMOD_TAG tag) {
     geode::log::debug("Reading album cover info...");
-    geode::log::NestScope scope();
+    geode::log::NestScope scope;
     // oh baby
     // this assumes reading the tag and everything is fine
     // and only supports mp3 APIC tags for now
@@ -232,8 +246,15 @@ void AudioManager::populateAlbumCover(std::shared_ptr<AudioSource> source, FMOD_
     char textEncoding = data[i++];
     std::string mimeType = std::string((const char*)(data + i)); i += mimeType.length();
     char pictureType = data[i++];
-    std::string description = std::string((const char*)(data + i)); i += description.length();
-    char* imageData = data + i;
+    std::string description;
+    if (textEncoding == 0x01 || textEncoding == 0x02) {
+        description = "(not read)";
+        i += std::char_traits<char16_t>::length((const char16_t*)(data + i)) * 2 + 2;
+    } else {
+        description = std::string((const char*)(data + i));
+        i += description.length();
+    }
+    void* imageData = data + i + 1;
     bool imageDataIsURL = false;
 
     if (mimeType == "-->") {
@@ -246,42 +267,45 @@ void AudioManager::populateAlbumCover(std::shared_ptr<AudioSource> source, FMOD_
         geode::log::debug("Encoding: 0x{:02X}", textEncoding);
         geode::log::debug("MIME type: \"{}\"", mimeType);
         geode::log::debug("Picture type 0x{:02X}", pictureType);
-        geode::log::debug("Description: \"{}\"", mimeType);
+        geode::log::debug("Description: \"{}\"", description);
         geode::log::debug("Image data is url: {}", imageDataIsURL);
     geode::log::popNest();
-
-    if (!imageDataIsURL && mimeType.find("image/") != 0) { mimeType = "image/" + mimeType; }
-
-    if (mimeType != "image/png") {
-        geode::log::debug("Album cover is in unsupported format: {}!", mimeType);
-        return;
-    }
 
     if (imageDataIsURL) {
         geode::log::debug("Album cover is in URL format!");
         return;
     }
 
+    // if there is no image/ prefix, image/ is implied - add it
+    if (mimeType.find("image/") != 0) { mimeType = "image/" + mimeType; }
+
+    auto format = em::utils::mimeTypeToFormat(mimeType);
+
+    if (format == cocos2d::CCImage::EImageFormat::kFmtUnKnown) {
+        geode::log::debug("Album cover is in unsupported format: {}!", mimeType);
+        return;
+    }
+
     // finally read it??
-    int length = tag.datalen - i;
+    int length = tag.datalen - i - 1; // minus one for null terminator
     auto image = new cocos2d::CCImage;
     // this ignores the last four params if type is a png
-    bool ret = image->initWithImageData(imageData, length, cocos2d::CCImage::EImageFormat::kFmtPng, 0, 0, 0, 0);
-    
-    if (!ret) {
-        geode::log::debug("Error creating CCImage from image data!");
+    if (!image->initWithImageData(imageData, length, format, 0, 0, 0, 0)) {
+        geode::log::warn("Error creating CCImage from image data for album cover of {}!", source->m_name);
         delete image;
         return;
     }
 
+    geode::log::debug("CCImage created, queue cctexture in main thread...");
     geode::Loader::get()->queueInMainThread([source, image]{
         auto texture = new cocos2d::CCTexture2D;
         if (!texture->initWithImage(image)) {
-            geode::log::info("Error creating CCTexture2D from CCImage!");
+            geode::log::warn("Error creating CCTexture2D from CCImage for album cover of {}!", source->m_name);
             delete texture;
             return;
         }
 
+        geode::log::debug("Album cover cctexture loaded for {}!", source->m_name);
         source->m_albumCover = texture;
     });
 }
@@ -328,10 +352,35 @@ void AudioManager::nextSong() {
 
 void AudioManager::prevSong() {
     geode::log::info("previous song...");
+    if (m_history.size() == 0) {
+        geode::log::info("no songs left");
+        return;
+    }
 
     auto prevSong = m_history.back();
     m_history.pop_back();
     goToSongFromHistory(prevSong);
+}
+
+void AudioManager::rewind() {
+    int pos = getCurrentSongPosition();
+    if (pos < 12000) {
+        prevSong();
+        return;
+    }
+
+    m_channel->setPosition(pos - 10000, FMOD_TIMEUNIT_MS);
+}
+
+void AudioManager::fastForward() {
+    int pos = getCurrentSongPosition();
+    int len = getCurrentSongLength();
+    if (pos > len - 12000) {
+        nextSong();
+        return;
+    }
+
+    m_channel->setPosition(pos + 10000, FMOD_TIMEUNIT_MS);
 }
 
 
@@ -457,6 +506,10 @@ unsigned int AudioManager::getCurrentSongPosition() {
 	return curPos;
 }
 
+unsigned int AudioManager::getCurrentSongLength() {
+    return getCurrentSong()->m_length;
+}
+
 
 bool AudioManager::shouldSongBePlaying() {
     return !m_isPaused && m_isInEditor && !m_isEditorAudioPlaying && !m_playCurrentSongQueuedForLoad && m_songs.size() != 0;
@@ -468,7 +521,7 @@ std::shared_ptr<AudioSource> AudioManager::getRandomSong() {
     std::shared_ptr<AudioSource> ret;
 
     do {
-        ret = m_songs[rand() % m_songs.size()];
+        ret = m_songs[m_randomSongGenerator(m_gen)];
     } while (std::find(m_queue.begin(), m_queue.end(), ret) != m_queue.end());
 
     return ret;

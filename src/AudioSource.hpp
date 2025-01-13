@@ -11,7 +11,9 @@ public:
     bool m_isLoadingAudio;
     bool m_hasLoadedAudio;
     FMOD::Sound* m_sound;
+    
     std::string m_name;
+    std::string m_artist;
     cocos2d::CCTexture2D* m_albumCover;
     unsigned int m_length;
 

@@ -2,6 +2,7 @@
 #include "AudioSource.hpp"
 #include "Easer.hpp"
 #include "ui/PreloadUI.hpp"
+#include <random>
 
 class AudioManager {
     AudioManager();
@@ -35,11 +36,16 @@ public:
 
     PreloadUI* m_preloadUI;
 
+    std::mt19937 m_gen;
+    std::uniform_int_distribution<int> m_randomSongGenerator;
+
     void populateSongs();
     void populateSongsThread();
     void setupPreloadUIFromPath(std::filesystem::path path);
     void populateSongsFromPath(std::filesystem::path path);
     void populateAudioSourceInfo(std::shared_ptr<AudioSource> source);
+    std::string populateStringTag(FMOD_TAG tag, bool useTitleFallback, std::shared_ptr<AudioSource> sourceForFallback = nullptr);
+    std::string readAlbumCoverDescription(void* data, char format);
     void populateAlbumCover(std::shared_ptr<AudioSource> source, FMOD_TAG tag);
     std::string figureOutFallbackName(std::filesystem::path path);
     std::string filterNameThruRegex(std::string songName);
@@ -48,6 +54,8 @@ public:
 
     void nextSong();
     void prevSong();
+    void rewind();
+    void fastForward();
     void goToSongFromQueue(std::shared_ptr<AudioSource> source);
     void goToSongAndRemakeQueue(std::shared_ptr<AudioSource> source);
     void goToSongFromHistory(std::shared_ptr<AudioSource> source);

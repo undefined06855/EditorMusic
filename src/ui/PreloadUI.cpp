@@ -37,16 +37,14 @@ bool PreloadUI::init() {
     m_progressLabel->setScale(0.75f); // initial scale, will be overwritten later
     addChildAtPosition(m_progressLabel, geode::Anchor::Center);
 
-    m_progressBar = Slider::create(nullptr, nullptr);
+    m_progressBar = ProgressBar::create(200.f);
     m_progressBar->setID("loading-progress-bar");
-    m_progressBar->m_touchLogic->m_thumb->setVisible(false);
-    m_progressBar->setValue(0.f);
-    addChildAtPosition(m_progressBar, geode::Anchor::Bottom, { 0.f, 9.f });
+    addChildAtPosition(m_progressBar, geode::Anchor::Bottom, { 0.f, 11.f });
 
     m_subtitleLabel = cocos2d::CCLabelBMFont::create("...", "bigFont.fnt");
     m_subtitleLabel->setID("loading-progress-subtitle");
     m_subtitleLabel->setScale(0.4f);
-    addChildAtPosition(m_subtitleLabel, geode::Anchor::Bottom, { 0.f, 10.f });
+    addChildAtPosition(m_subtitleLabel, geode::Anchor::Bottom, { 0.f, 12.f });
 
     float pad = 10.f;
     float sceneTop = cocos2d::CCScene::get()->getContentHeight();

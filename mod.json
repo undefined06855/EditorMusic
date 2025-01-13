@@ -29,7 +29,7 @@
 	},
 
 	"resources": {
-		"sprites": [ "./resources/*.png" ]
+		"sprites": [ "./resources/*.png", "./resources/*/*.png" ]
 	},
 
 	"settings": {

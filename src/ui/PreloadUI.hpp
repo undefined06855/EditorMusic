@@ -1,5 +1,6 @@
 #pragma once
 #include <Geode/Geode.hpp>
+#include "ProgressBar.hpp"
 
 class PreloadUI : public cocos2d::CCNodeRGBA {
 public:
@@ -11,7 +12,7 @@ public:
     int m_songsLoaded;
     cocos2d::CCLabelBMFont* m_progressLabel;
     cocos2d::CCLabelBMFont* m_subtitleLabel;
-    Slider* m_progressBar;
+    ProgressBar* m_progressBar;
     
     cocos2d::CCPoint m_animUpperPos;
     cocos2d::CCPoint m_animLowerPos;

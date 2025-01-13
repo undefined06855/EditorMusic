@@ -42,11 +42,10 @@ bool HookedEditorPauseLayer::init(LevelEditorLayer* editor) {
 
     auto objLabel = static_cast<cocos2d::CCLabelBMFont*>(menu->getChildByID("object-count-label"));
     auto lengthLabel = static_cast<cocos2d::CCLabelBMFont*>(menu->getChildByID("length-label"));
-    if (objLabel && lengthLabel && objLabel->getContentWidth() > 350.f) {
-        objLabel->setScale(.375f);
-        lengthLabel->setScale(.375f);
+    if (objLabel && lengthLabel) {
+        objLabel->limitLabelWidth(175.f, 0.5f, .1f);
+        lengthLabel->limitLabelWidth(175.f, 0.5f, .1f);
     }
-
 
     return true;
 }
