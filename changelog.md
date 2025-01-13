@@ -1,4 +1,13 @@
 # EditorMusic
+## v2.0.0
+- Complete rewrite of the entire mod from the ground up!
+- Redid the song popup
+- Added loading album art
+- Improved reliability to reduce crashes
+- Fixed many bugs
+- Improved logging to allow for easier debugging and easier fixing
+- Preloads the next 3 and last 3 songs
+- Fixed loading issues (#23)
 ## v1.3.11
 - Fixed UI in pause layer
 ## v1.3.10
