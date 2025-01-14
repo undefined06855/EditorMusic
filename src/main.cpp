@@ -1,4 +1,5 @@
 #include "AudioManager.hpp"
+#include "ui/SongInfoPopup.hpp"
 
 $on_mod(Loaded) {
     if (!geode::Mod::get()->getSettingValue<bool>("menulayer-load")) AudioManager::get().init();
@@ -8,6 +9,11 @@ $on_mod(Loaded) {
 
         if (value) am.updateLowPassFilter();
         else       am.m_channel->removeDSP(am.m_lowPassFilter);
+    });
+
+    geode::listenForSettingChanges("player-format", [](std::string value) {
+        auto popup = SongInfoPopup::get();
+        if (popup) popup->updateCustomizableUI();
     });
 }
 

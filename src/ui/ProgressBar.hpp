@@ -4,7 +4,7 @@
 
 #include <Geode/Geode.hpp>
 
-class ProgressBar : public cocos2d::CCNode {
+class ProgressBar : public cocos2d::CCNodeRGBA {
 public:
     static ProgressBar* create(float width);
     bool init(float width);

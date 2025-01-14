@@ -8,6 +8,7 @@
 - Improved logging to allow for easier debugging and easier fixing
 - Preloads the next 3 and last 3 songs
 - Fixed loading issues (#23)
+- Now runs on a queue and history system, so songs should not be repeated
 ## v1.3.11
 - Fixed UI in pause layer
 ## v1.3.10
@@ -23,7 +24,7 @@
 ## v1.3.6
 - Change the text for how to get to mod config folder
 - Add fading for volume as well as low-pass filter to prevent popping (and make it sound nice)
-- Songs now only load when needed and not at startup (todo: toggle for this)
+- Songs now only load when needed and not at startup
 ## v1.3.5
 - Remove a log that logged info every single frame
 ## v1.3.4

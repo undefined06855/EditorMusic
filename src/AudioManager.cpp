@@ -6,10 +6,6 @@
 #include "simdutf.h"
 #include "utils.hpp"
 
-// TODO: some bug somewhere that makes it so songs get added twice?
-// i think to do with prevSong and nextSong or something but idk
-// need to take a look
-
 AudioManager& AudioManager::get() {
     static AudioManager instance;
     return instance;
@@ -22,10 +18,9 @@ AudioManager::AudioManager()
 
     , m_queue({})
     , m_history({})
-    , m_queueLength(30)
-    , m_historyLength(15)
+    , m_queueLength(50)
+    , m_historyLength(25)
     , m_songs({})
-    , m_hasZeroSongs(false)
     
     , m_isInEditor(false)
     , m_isEditorAudioPlaying(false)
@@ -60,6 +55,7 @@ void AudioManager::populateSongs() {
     m_songs.clear();
     m_history.clear();
     if (m_channel) m_channel->stop();
+    m_queueLength = 50;
 
     m_preloadUI = PreloadUI::create();
     m_preloadUI->addToSceneAndAnimate();
@@ -84,16 +80,22 @@ void AudioManager::populateSongsThread() {
 
     geode::log::info("Finished populating songs!");
     if (m_songs.size() < m_queueLength) m_queueLength = m_songs.size();
-    m_isQueueBeingPopulated = false;
 
-    m_randomSongGenerator = std::uniform_int_distribution<int>(0, m_songs.size());
+    if (m_songs.size() > 1) m_randomSongGenerator = std::uniform_int_distribution<int>(0, m_songs.size() - 1);
+
+    if (m_isInEditor) {
+        checkQueueLength();
+        checkSongPreload();
+    }
+
+    m_isQueueBeingPopulated = false;
 }
 
 void AudioManager::setupPreloadUIFromPath(std::filesystem::path path) {
     if (!std::filesystem::exists(path)) return;
     geode::log::debug("Populating song total from path...");
     for (const auto& file : std::filesystem::directory_iterator(path.string())) {
-        if (std::filesystem::is_regular_file(file)) m_preloadUI->m_totalSongs++;
+        if (std::filesystem::is_regular_file(file) && isValidAudioFile(file)) m_preloadUI->m_totalSongs++;
         if (std::filesystem::is_directory(file)) setupPreloadUIFromPath(file);
     }
 }
@@ -109,6 +111,8 @@ void AudioManager::populateSongsFromPath(std::filesystem::path path) {
             continue;
         }
 
+        if (!isValidAudioFile(file)) continue;
+
         auto source = std::make_shared<AudioSource>(file.path());
         populateAudioSourceInfo(source);
         m_songs.push_back(source);
@@ -116,6 +120,13 @@ void AudioManager::populateSongsFromPath(std::filesystem::path path) {
             m_preloadUI->increment(source->m_name);
         });
 	}
+}
+
+bool AudioManager::isValidAudioFile(std::filesystem::path path) {
+    if (!std::filesystem::is_regular_file(path)) return false;
+    
+    static const std::array<std::string, 4> validFiles = { ".mp3", ".wav", ".ogg", ".flac" };
+    return std::find(validFiles.begin(), validFiles.end(), path.extension()) != validFiles.end();
 }
 
 void AudioManager::populateAudioSourceInfo(std::shared_ptr<AudioSource> source) {
@@ -198,7 +209,7 @@ std::string AudioManager::populateStringTag(FMOD_TAG tag, bool useTitleFallback,
                 return useTitleFallback ? figureOutFallbackName(sourceForFallback->m_path) : "Unknown";
             }
 
-            return ret;
+            return filterNameThruRegex(ret);
         }
 
         case FMOD_TAGDATATYPE_STRING_UTF16BE: {
@@ -215,13 +226,13 @@ std::string AudioManager::populateStringTag(FMOD_TAG tag, bool useTitleFallback,
                 return useTitleFallback ? figureOutFallbackName(sourceForFallback->m_path) : "Unknown";
             }
 
-            return ret;
+            return filterNameThruRegex(ret);
         }
 
         case FMOD_TAGDATATYPE_STRING:
         case FMOD_TAGDATATYPE_STRING_UTF8: {
             geode::log::debug("Tag is in utf8");
-            return std::string((char*)tag.data);
+            return filterNameThruRegex(std::string((char*)tag.data));
         }
         
         default: {
@@ -317,9 +328,7 @@ std::string AudioManager::figureOutFallbackName(std::filesystem::path path) {
 
 std::string AudioManager::filterNameThruRegex(std::string songName) {
     size_t potentialNullByte = songName.find('\0');
-    if (potentialNullByte != std::string::npos) {
-        songName.erase(potentialNullByte);
-    }
+    if (potentialNullByte != std::string::npos) songName.erase(potentialNullByte);
 
     // regex of chars that are in bigFont.fnt
     // any character from space to ~ and also bullet point (u2022)
@@ -341,28 +350,44 @@ void AudioManager::checkQueueLength() {
 }
 
 void AudioManager::nextSong() {
+    if (!shouldAllowAudioFunctions()) return;
+
     geode::log::info("next song...");
     std::shared_ptr<AudioSource> nextSong;
 
     if (m_queue.size() == 1) nextSong = getCurrentSong();
     else nextSong = m_queue[1];
 
-    goToSongFromQueue(nextSong);
+    m_history.push_back(getCurrentSong());
+    if (m_queue.size() > 1) m_queue.pop_front();
+
+    checkQueueLength();
+    checkSongPreload();
+    startPlayingCurrentSong();
 }
 
 void AudioManager::prevSong() {
+    if (!shouldAllowAudioFunctions()) return;
+
     geode::log::info("previous song...");
     if (m_history.size() == 0) {
         geode::log::info("no songs left");
+        geode::Notification::create("No songs left!", geode::NotificationIcon::None, .7f);
         return;
     }
 
     auto prevSong = m_history.back();
+    m_queue.push_front(prevSong);
     m_history.pop_back();
-    goToSongFromHistory(prevSong);
+
+    checkQueueLength();
+    checkSongPreload();
+    startPlayingCurrentSong();
 }
 
 void AudioManager::rewind() {
+    if (!shouldAllowAudioFunctions()) return;
+
     int pos = getCurrentSongPosition();
     if (pos < 12000) {
         prevSong();
@@ -373,6 +398,8 @@ void AudioManager::rewind() {
 }
 
 void AudioManager::fastForward() {
+    if (!shouldAllowAudioFunctions()) return;
+
     int pos = getCurrentSongPosition();
     int len = getCurrentSongLength();
     if (pos > len - 12000) {
@@ -381,59 +408,6 @@ void AudioManager::fastForward() {
     }
 
     m_channel->setPosition(pos + 10000, FMOD_TIMEUNIT_MS);
-}
-
-
-void AudioManager::goToSongFromQueue(std::shared_ptr<AudioSource> source) {
-    geode::log::info("going to song {} (from queue)", source->m_name);
-    
-    // get current song and put in history
-    m_history.push_back(source);
-    
-    // then pop every other song before it so that it becomes the new song 0 in
-    // m_queue
-
-    auto iterator = std::find(m_queue.begin(), m_queue.end(), source);
-    if (iterator != m_queue.end()) {
-        for (auto i = m_queue.begin(); i != iterator; ++i) {
-            m_history.push_back(source);
-            m_queue.pop_front();
-        }
-    }
-
-    // and repopulate queue
-    checkQueueLength();
-    checkSongPreload();
-    startPlayingCurrentSong();
-}
-
-void AudioManager::goToSongAndRemakeQueue(std::shared_ptr<AudioSource> source) {
-    geode::log::debug("going to song {} (remake queue)", source->m_name);
-
-    // just go to it
-    // this is for if you click on a song in the entire playlist
-    // so clear everything, plonk this at the start of m_queue and remake everything
-
-    m_history.clear();
-    m_queue.clear();
-    m_queue.push_back(source);
-    checkQueueLength();
-    checkSongPreload();
-    startPlayingCurrentSong();
-}
-
-void AudioManager::goToSongFromHistory(std::shared_ptr<AudioSource> source) {
-    geode::log::debug("going to song {} (from history)", source->m_name);
-
-    // go to it but this is a song in history
-    // so DONT clear history and DONT remake queue
-    // just shove this at the start and let checkQueueLength remove the last one
-    // DONT add the current song to history either
-
-    m_queue.push_front(source);
-    checkQueueLength();
-    checkSongPreload();
-    startPlayingCurrentSong();
 }
 
 
@@ -512,7 +486,11 @@ unsigned int AudioManager::getCurrentSongLength() {
 
 
 bool AudioManager::shouldSongBePlaying() {
-    return !m_isPaused && m_isInEditor && !m_isEditorAudioPlaying && !m_playCurrentSongQueuedForLoad && m_songs.size() != 0;
+    return !m_isPaused && m_isInEditor && !m_isEditorAudioPlaying && !m_playCurrentSongQueuedForLoad && !m_songs.empty() && !m_isQueueBeingPopulated;
+}
+
+bool AudioManager::shouldAllowAudioFunctions() {
+    return m_isInEditor && !m_playCurrentSongQueuedForLoad && !m_songs.empty() && !m_isQueueBeingPopulated;
 }
 
 
@@ -547,15 +525,15 @@ void AudioManager::updateLowPassFilter() {
 
 void AudioManager::enterEditor() {
     m_isInEditor = true;
-    if (m_songs.size() == 0) return;
-    
+    if (m_songs.empty()) return;
+
     checkQueueLength();
     startPlayingCurrentSong();
 }
 
 void AudioManager::exitEditor() {
     m_isInEditor = false;
-    if (m_songs.size() == 0) return;
+    if (m_songs.empty()) return;
 
     m_channel->stop(); // will cause it to be freed
     m_channel = nullptr;

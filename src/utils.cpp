@@ -31,4 +31,14 @@ cocos2d::CCImage::EImageFormat mimeTypeToFormat(std::string mimeType) {
     return ret->second;
 }
 
+bool isMusicPlayerCentered() {
+    auto format = geode::Mod::get()->getSettingValue<std::string>("player-format");
+    return format == "centered no album" || format == "centered with album";
+}
+
+bool showMusicPlayerAlbumCover() {
+    auto format = geode::Mod::get()->getSettingValue<std::string>("player-format");
+    return format == "default" || format == "centered with album";
+}
+
 }

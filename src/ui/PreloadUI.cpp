@@ -72,15 +72,21 @@ void PreloadUI::addToSceneAndAnimate() {
 void PreloadUI::increment(std::string lastSongLoadedName) {
     m_songsLoaded++;
     m_progressLabel->setString(lastSongLoadedName.c_str());
-    m_progressLabel->limitLabelWidth(190.f, 1.f, 0.1f);
+    m_progressLabel->limitLabelWidth(190.f, .5f, 0.1f);
     m_subtitleLabel->setString(fmt::format("{}/{}", m_songsLoaded, m_totalSongs).c_str());
     m_progressBar->setValue((float)m_songsLoaded / (float)m_totalSongs);
 }
 
 void PreloadUI::runCompleteAnimationAndRemove() {
-    m_progressLabel->setString(fmt::format("Song loading complete!").c_str());
-    m_progressLabel->limitLabelWidth(190.f, 1.f, 0.1f);
-    m_subtitleLabel->setString(fmt::format("{}/{}", m_songsLoaded, m_totalSongs).c_str());
+    if (m_totalSongs > 0) {
+        m_progressLabel->setString("Song loading complete!");
+        m_progressLabel->limitLabelWidth(190.f, .7f, 0.1f);
+        m_subtitleLabel->setString(fmt::format("{}/{}", m_songsLoaded, m_totalSongs).c_str());
+    } else {
+        m_progressLabel->setString("No songs loaded!");
+        m_progressLabel->limitLabelWidth(190.f, .7f, 0.1f);
+        m_subtitleLabel->setString("");
+    }
 
     geode::SceneManager::get()->forget(this);
 

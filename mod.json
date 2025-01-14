@@ -53,6 +53,12 @@
 			"type": "bool",
 			"default": true
 		},
+		"player-format": {
+			"name": "Music player layout",
+			"type": "string",
+			"default": "default",
+			"one-of": [ "default", "centered no album", "centered with album" ]
+		},
 		"extra-songs-path": {
 			"name": "Extra songs path",
 			"type": "folder",

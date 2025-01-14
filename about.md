@@ -13,4 +13,4 @@ This just adds music to the editor, which pauses when playtesting and shuffles t
 
 
 ## This mod has recently had a complete rewrite! If you see some missing features, this is most likely why. They will be added eventually!
-Please report any bugs as a result to me either through the github or through the geode discord server. Most bugs have been fixed but there may still be some crashes in the editor, using BetterEdit with autosave is recommended at this moment, but stability should be more or less alright unless you have some weird songs - if so it will most likely crash on startup! If the mod does crash on startup, check there are only a-z and 0-9 characters in the song name, artist name, image description and path of the song!
+Please report any bugs as a result to me either through the github or through the geode discord server. If the mod crashes on startup, check there are only a-z and 0-9 characters in the song name, artist name, album cover description and path of the song!

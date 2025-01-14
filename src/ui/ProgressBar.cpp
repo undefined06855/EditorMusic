@@ -49,6 +49,8 @@ bool ProgressBar::init(float width) {
 
     setAnchorPoint({ .5f, .5f });
     setContentSize({ width, 8.f });
+    setCascadeColorEnabled(true);
+    setCascadeOpacityEnabled(true);
 
     return true;
 }

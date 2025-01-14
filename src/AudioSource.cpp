@@ -6,6 +6,7 @@ AudioSource::AudioSource(std::filesystem::path path)
     , m_hasLoadedAudio(false)
     , m_sound(nullptr)
     , m_name("<UNLOADED>")
+    , m_artist("<UNLOADED>")
     , m_albumCover(nullptr)
     , m_length(0) {}
 

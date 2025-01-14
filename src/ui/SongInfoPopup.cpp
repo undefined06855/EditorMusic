@@ -14,26 +14,60 @@ SongInfoPopup* SongInfoPopup::create() {
     return nullptr;
 }
 
+SongInfoPopup* SongInfoPopup::get() {
+    return cocos2d::CCScene::get()->getChildByType<SongInfoPopup>(0);
+}
+
 bool SongInfoPopup::setup() {
     setTitle("Current song:");
     setID("SongInfoPopup"_spr);
 
-    m_albumCoverSprite = nullptr;
+    m_isInStrippedBackMode = false;
 
-    m_currentSongLabel = cocos2d::CCLabelBMFont::create("...", "bigFont.fnt");
-    m_currentSongLabel->setID("current-song-label");
-    m_currentSongLabel->setAnchorPoint({ 0.f, .5f });
-    m_mainLayer->addChildAtPosition(m_currentSongLabel, geode::Anchor::Left, { 87.f, -6.5f });
+    auto am = AudioManager::get();
+    if (am.m_songs.empty()) {
+        m_isInStrippedBackMode = true;
 
-    m_currentSongArtistLabel = cocos2d::CCLabelBMFont::create("...", "bigFont.fnt");
-    m_currentSongArtistLabel->setID("current-song-artist-label");
-    m_currentSongArtistLabel->setAnchorPoint({ 0.f, .5f });
-    m_mainLayer->addChildAtPosition(m_currentSongArtistLabel, geode::Anchor::Left, { 87.f, -20.f });
+        auto noticeLabel = cocos2d::CCLabelBMFont::create("You have no songs :(", "bigFont.fnt");
+        noticeLabel->setScale(.8f);
+        noticeLabel->setID("no-songs-notice-label");
+        m_mainLayer->addChildAtPosition(noticeLabel, geode::Anchor::Center, { 0.f, 33.f });
 
-    // TODO: allow hiding album cover - probably by moving m_currentSongLabel
-    // and artist label to the centre and making them centred? maybe also allow
-    // for that but also with the album cover by putting the album cover behind
-    // the labels
+        auto secondaryNoticeLabel = cocos2d::CCLabelBMFont::create("You have no songs in either your config or custom folder! Go to the mod settings to open the config folder to place songs in (or to set a custom folder), then press the reload button, or restart the game.", "bigFont.fnt", 240.f);
+        secondaryNoticeLabel->setID("no-songs-secondary-notice-label");
+        secondaryNoticeLabel->setScale(.3f);
+        m_mainLayer->addChildAtPosition(secondaryNoticeLabel, geode::Anchor::Center, { 0.f, -3.f });
+
+        auto reloadButton = CCMenuItemSpriteExtra::create(ButtonSprite::create("Reload"), this, menu_selector(SongInfoPopup::onNoSongsRefresh));
+        reloadButton->setID("no-songs-reload-button");
+        m_buttonMenu->addChildAtPosition(reloadButton, geode::Anchor::Bottom, { 0.f, 24.f });
+
+        m_closeBtn->removeFromParent();
+        m_buttonMenu->addChildAtPosition(m_closeBtn, geode::Anchor::TopLeft);
+
+        auto spr = getRandomSpriteForNoSongPopup();
+        spr->setID("no-songs-random-sprite");
+        spr->setScale(.5f);
+        m_mainLayer->addChildAtPosition(spr, geode::Anchor::Left, { 20.f, 0.f });
+
+        return true;
+    }
+
+    if (am.m_isQueueBeingPopulated) {
+        m_isInStrippedBackMode = true;
+
+        auto noticeLabel = cocos2d::CCLabelBMFont::create("Songs are being loaded! Come back later once it's finished.", "bigFont.fnt", 300.f);
+        noticeLabel->setScale(.5f);
+        noticeLabel->setID("songs-populating-notice-label");
+        m_mainLayer->addChildAtPosition(noticeLabel, geode::Anchor::Center, { 0.f, 20.f });
+
+        auto silly = cocos2d::CCSprite::create("dialogIcon_018.png");
+        silly->setID("songs-populating-silly-image");
+        silly->setScale(.6f);
+        m_mainLayer->addChildAtPosition(silly, geode::Anchor::Center, { 33.f, -15.f });
+
+        return true;
+    }
 
     m_progressBar = ProgressBar::create(345.f);
     m_progressBar->setID("song-progress-bar");
@@ -100,8 +134,6 @@ bool SongInfoPopup::setup() {
     settingsButton->setID("settings-btn");
     m_buttonMenu->addChildAtPosition(settingsButton, geode::Anchor::TopRight);
 
-
-
     m_loadingCircle = LoadingCircleSprite::create(1.f);
     m_loadingCircle->setID("loading-circle");
     m_mainLayer->addChildAtPosition(m_loadingCircle, geode::Anchor::Center);
@@ -113,14 +145,51 @@ bool SongInfoPopup::setup() {
     m_buttonMenu->addChildAtPosition(m_closeBtn, geode::Anchor::TopLeft);
     m_buttonMenu->setID("button-menu");
     m_title->setID("title");
+    m_bgSprite->setID("bg-sprite");
+    m_bgSprite->setZOrder(-10);
 
-    update(0.f);
+    // adds the rest of the labels
+    // can be called from elsewhere to be updated after changing settings
+    // which is why its in a different function
+    // setting nullptr here to ensure the removing checks correctly work and dont
+    // remove nodes that dont exist!
+    m_currentSongLabel = nullptr;
+    m_currentSongArtistLabel = nullptr;
+    m_albumCoverSprite = nullptr;
+    updateCustomizableUI();
+
     scheduleUpdate();
 
     return true;
 }
 
+void SongInfoPopup::updateCustomizableUI() {
+    if (m_isInStrippedBackMode) return;
+    if (m_currentSongLabel) m_currentSongLabel->removeFromParent();
+    if (m_currentSongArtistLabel) m_currentSongArtistLabel->removeFromParent();
+    
+    m_currentSongLabel = cocos2d::CCLabelBMFont::create("...", "bigFont.fnt");
+    m_currentSongLabel->setID("current-song-label");
+
+    m_currentSongArtistLabel = cocos2d::CCLabelBMFont::create("...", "bigFont.fnt");
+    m_currentSongArtistLabel->setID("current-song-artist-label");
+
+    if (em::utils::isMusicPlayerCentered()) {
+        m_mainLayer->addChildAtPosition(m_currentSongLabel, geode::Anchor::Center, { 0.f, 8.f });
+        m_mainLayer->addChildAtPosition(m_currentSongArtistLabel, geode::Anchor::Center, { 0.f, -7.25f });
+    } else {
+        m_currentSongLabel->setAnchorPoint({ 0.f, .5f });
+        m_currentSongArtistLabel->setAnchorPoint({ 0.f, .5f });
+        m_mainLayer->addChildAtPosition(m_currentSongLabel, geode::Anchor::Left, { 84.f, -3.f });
+        m_mainLayer->addChildAtPosition(m_currentSongArtistLabel, geode::Anchor::Left, { 84.f, -17.25f });
+    }
+
+    m_currentSong = nullptr;
+    update(0.f);
+}
+
 void SongInfoPopup::update(float dt) {
+    if (m_isInStrippedBackMode) return;
     auto audioManager = AudioManager::get();
 
     m_loadingCircle->setVisible(audioManager.m_playCurrentSongQueuedForLoad);
@@ -140,7 +209,7 @@ void SongInfoPopup::update(float dt) {
 
 
     m_currentSongLabel->setString(m_currentSong->m_name.c_str());
-    m_currentSongLabel->limitLabelWidth(250.f, .5f, 0.f);
+    m_currentSongLabel->limitLabelWidth(265.f, em::utils::isMusicPlayerCentered() ? .7f : .5f, 0.f);
 
     m_currentSongArtistLabel->setString(m_currentSong->m_artist.c_str());
     m_currentSongArtistLabel->limitLabelWidth(150.f, .4f, 0.f);
@@ -149,16 +218,18 @@ void SongInfoPopup::update(float dt) {
 }
 
 void SongInfoPopup::updateAlbumCover() {
+    if (m_isInStrippedBackMode) return;
     if (m_albumCoverSprite) m_albumCoverSprite->removeFromParent();
 
     if (m_currentSong->m_albumCover) {
-        geode::log::debug("Album cover found!!");
+        geode::log::debug("Album cover found for {}", m_currentSong->m_name);
         m_albumCoverSprite = cocos2d::CCSprite::createWithTexture(m_currentSong->m_albumCover);
     } else {
-        geode::log::debug("No album cover found, using fallback...");
+        geode::log::debug("No album cover found for {}, using fallback...", m_currentSong->m_name);
         m_albumCoverSprite = cocos2d::CCSprite::create("album-placeholder.png"_spr);
     }
 
+    // resize to be 70x70 max
     if (m_albumCoverSprite->getContentWidth() >= m_albumCoverSprite->getContentHeight()) {
         auto width = m_albumCoverSprite->getContentWidth();
         m_albumCoverSprite->setScale(70.f / width);
@@ -168,8 +239,29 @@ void SongInfoPopup::updateAlbumCover() {
     }
 
     m_albumCoverSprite->setID("album-cover");
-    m_albumCoverSprite->setAnchorPoint({ 0.f, 0.5f });
-    m_mainLayer->addChildAtPosition(m_albumCoverSprite, geode::Anchor::Left, { 10.f, 10.f });
+    m_albumCoverSprite->setZOrder(-1);
+    m_albumCoverSprite->setVisible(em::utils::showMusicPlayerAlbumCover());
+
+    if (em::utils::isMusicPlayerCentered()) {
+        m_mainLayer->addChildAtPosition(m_albumCoverSprite, geode::Anchor::Center, { 0.f, 3.f });
+    } else {
+        m_albumCoverSprite->setAnchorPoint({ 0.f, 0.5f });
+        m_mainLayer->addChildAtPosition(m_albumCoverSprite, geode::Anchor::Left, { 10.f, 10.f });
+    }
+}
+
+cocos2d::CCSprite* SongInfoPopup::getRandomSpriteForNoSongPopup() {
+    std::array<std::string, 7> potentialSpriteNames = {
+        "dialogIcon_029.png", // confused
+        "dialogIcon_028.png", // robtop
+        "dialogIcon_034.png", // eyes
+        "dialogIcon_043.png", // diamond guy
+        "dialogIcon_052.png", // choppa
+        "dialogIcon_054.png", // wraith
+        "dialogIcon_023.png" // potbor annoyed
+    };
+
+    return cocos2d::CCSprite::create(potentialSpriteNames[rand() % 7].c_str());
 }
 
 void SongInfoPopup::onPlayPause(cocos2d::CCObject* sender) { AudioManager::get().m_isPaused = !AudioManager::get().m_isPaused; }
@@ -179,3 +271,8 @@ void SongInfoPopup::onRewind(cocos2d::CCObject* sender) { AudioManager::get().re
 void SongInfoPopup::onFastForward(cocos2d::CCObject* sender) { AudioManager::get().fastForward(); }
 
 void SongInfoPopup::onSettings(cocos2d::CCObject* sender) { geode::openSettingsPopup(geode::Mod::get(), false); }
+
+void SongInfoPopup::onNoSongsRefresh(cocos2d::CCObject* sender) {
+    AudioManager::get().populateSongs();
+    onClose(sender);
+}

@@ -15,7 +15,6 @@ public:
     int m_queueLength;
     int m_historyLength;
     std::vector<std::shared_ptr<AudioSource>> m_songs;
-    bool m_hasZeroSongs;
 
     FMOD::Channel* m_channel;
 	FMOD::System* m_system;
@@ -45,10 +44,10 @@ public:
     void populateSongsFromPath(std::filesystem::path path);
     void populateAudioSourceInfo(std::shared_ptr<AudioSource> source);
     std::string populateStringTag(FMOD_TAG tag, bool useTitleFallback, std::shared_ptr<AudioSource> sourceForFallback = nullptr);
-    std::string readAlbumCoverDescription(void* data, char format);
     void populateAlbumCover(std::shared_ptr<AudioSource> source, FMOD_TAG tag);
     std::string figureOutFallbackName(std::filesystem::path path);
     std::string filterNameThruRegex(std::string songName);
+    bool isValidAudioFile(std::filesystem::path path);
 
     void checkQueueLength();
 
@@ -56,9 +55,6 @@ public:
     void prevSong();
     void rewind();
     void fastForward();
-    void goToSongFromQueue(std::shared_ptr<AudioSource> source);
-    void goToSongAndRemakeQueue(std::shared_ptr<AudioSource> source);
-    void goToSongFromHistory(std::shared_ptr<AudioSource> source);
 
     void update(float dt);
     void startPlayingCurrentSong();
@@ -67,8 +63,8 @@ public:
     std::shared_ptr<AudioSource> getCurrentSong();
     unsigned int getCurrentSongPosition();
     unsigned int getCurrentSongLength();
-    bool getCurrentChannelIsPlaying();
     bool shouldSongBePlaying();
+    bool shouldAllowAudioFunctions();
 
     std::shared_ptr<AudioSource> getRandomSong();
 
