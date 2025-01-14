@@ -4,22 +4,22 @@
 		"win": "2.2074",
 		"android": "2.2074"
 	},
-	"version": "v1.3.11",
+	"version": "v2.0.0",
 	"id": "undefined0.editormusic",
 	"name": "EditorMusic",
 	"developer": "undefined0",
-	"description": "music in your editor, what's not to like?",
+	"description": "Music in your editor, what's not to like?",
 	"tags": [ "editor", "music", "enhancement" ],
 
 	"dependencies": [
 		{
 			"id": "geode.node-ids",
-			"version": "1.18.0",
+			"version": "1.19.0",
 			"importance": "required"
 		},
 		{
 			"id": "geode.custom-keybinds",
-			"version": "1.10.0",
+			"version": "1.10.1",
 			"importance": "required"
 		}
 	],
@@ -29,7 +29,7 @@
 	},
 
 	"resources": {
-		"sprites": [ "./resources/*.png" ]
+		"sprites": [ "./resources/*.png", "./resources/*/*.png" ]
 	},
 
 	"settings": {
@@ -44,23 +44,8 @@
 				"input": true,
 				"big-arrows": false,
 				"arrows": false,
-				"slider-step": 0.001
+				"slider-step": 0.01
 			}
-		},
-		"current-song": {
-			"name": "Show current song in editor",
-			"type": "bool",
-			"default": true
-		},
-		"skip-song": {
-			"name": "Show next song button in editor",
-			"type": "bool",
-			"default": true
-		},
-		"prev-song": {
-			"name": "Show previous song button in editor",
-			"type": "bool",
-			"default": false
 		},
 		"low-pass": {
 			"name": "Enable low-pass filter",
@@ -68,29 +53,29 @@
 			"type": "bool",
 			"default": true
 		},
-		"unnamed-song-fallback": {
-			"name": "Use filename for unnamed songs",
-			"type": "bool",
-			"default": true,
-			"description": "If this is enabled, it uses the file name for unnamed songs instead of your preference."
-		},
-		"unnamed-song-fallback-custom": {
-			"name": "Unnamed song fallback name",
+		"player-format": {
+			"name": "Music player layout",
 			"type": "string",
-			"default": "(unnamed song)"
+			"default": "default",
+			"one-of": [ "default", "centered no album", "centered with album" ]
 		},
 		"extra-songs-path": {
-			"name": "Extra songs path (req. restart)",
+			"name": "Extra songs path",
 			"type": "folder",
 			"description": "If this is set to a path, EditorMusic will take songs from here as well as the config folder.",
 			"default": "(none)"
 		},
-		"unsupported-characters-fallback": {
-			"name": "Unsupported character fallback",
-			"type": "string",
-			"default": "",
-			"description": "Unsupported characters are replaced by this chosen character. Set to blank to just remove the character.",
-			"filter": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/\\:;.,-_(){}[]!$£ %^&#~@=+"
+		"menulayer-load": {
+			"name": "Menulayer load",
+			"description": "Makes song loading start when you enter the main menu, instead of when the mod loads.",
+			"type": "bool",
+			"default": false
+		},
+		"enable-log": {
+			"name": "Enable logging",
+			"description": "Enables logging for easier debugging - will make very large log sizes!!!",
+			"type": "bool",
+			"default": false
 		}
 	}
 }

@@ -1,269 +1,573 @@
 #include "AudioManager.hpp"
-#include <codecvt>
+#include "ui/SongInfoPopup.hpp"
+#include <Geode/fmod/fmod_errors.h>
 #include <regex>
-#include "Ease.hpp"
+#include <locale>
+#include "simdutf.h"
+#include "utils.hpp"
+#include "log.hpp"
 
 AudioManager& AudioManager::get() {
-	static AudioManager instance;
-	return instance;
+    static AudioManager instance;
+    return instance;
 }
 
-void AudioManager::setupFromOneFolder(std::filesystem::path path) {
-	for (const auto& file : std::filesystem::directory_iterator(path.string())) {
-		std::filesystem::path path = file.path();
+AudioManager::AudioManager() 
+    : m_channel(nullptr)
+    , m_system(FMODAudioEngine::sharedEngine()->m_system)
+    , m_volume(1.f)
 
-		if (this->extensions.contains(path.extension().string()) && std::filesystem::is_regular_file(path)) {
-			UnloadedAudio song;
-			song.path = path;
-			this->songs.push_back(song);
-		} else {
-			log::warn("Unsupported file extension or folder found in config dir: {} (from {})", path.extension().string(), path.filename().string());
-		}
+    , m_queue({})
+    , m_history({})
+    , m_queueLength(50)
+    , m_historyLength(25)
+    , m_songs({})
+    
+    , m_isInEditor(false)
+    , m_isEditorAudioPlaying(false)
+    , m_isPaused(false)
+    , m_isQueueBeingPopulated(false)
+    
+    , m_playCurrentSongQueuedForLoad(false)
+    
+    , m_lowPassStrength(0)
+    , m_lowPassEasedCutoff(0)
+    , m_lowPassFilter(nullptr)
+    
+    , m_easers({})
+    
+    , m_gen(std::random_device{}())
+    , m_randomSongGenerator(0, 1) {}
+
+void AudioManager::init() {
+    em::log::debug("AudioManager::init()");
+    populateSongs();
+    m_system->createDSPByType(FMOD_DSP_TYPE_LOWPASS, &m_lowPassFilter);
+	m_lowPassFilter->setParameterFloat(FMOD_DSP_LOWPASS_RESONANCE, 0.f);
+
+    // i think this fixes stuff but idk not sure
+    std::locale::global(std::locale{".utf-8"});
+    std::setlocale(LC_ALL, ".utf-8");
+}
+
+void AudioManager::populateSongs() {
+    m_isQueueBeingPopulated = true;
+    m_queue.clear();
+    m_songs.clear();
+    m_history.clear();
+    if (m_channel) m_channel->stop();
+    m_queueLength = 50;
+
+    m_preloadUI = PreloadUI::create();
+    m_preloadUI->addToSceneAndAnimate();
+    std::thread(&AudioManager::populateSongsThread, this).detach();
+}
+
+void AudioManager::populateSongsThread() {
+    geode::utils::thread::setName("EditorMusic Song Loading");
+    em::log::info("Populating songs...");
+
+    geode::log::pushNest();
+    setupPreloadUIFromPath(geode::Mod::get()->getConfigDir());
+    setupPreloadUIFromPath(geode::Mod::get()->getSettingValue<std::filesystem::path>("extra-songs-path"));
+    populateSongsFromPath(geode::Mod::get()->getConfigDir());
+    populateSongsFromPath(geode::Mod::get()->getSettingValue<std::filesystem::path>("extra-songs-path"));
+    geode::log::popNest();
+
+    geode::Loader::get()->queueInMainThread([this]{
+        m_preloadUI->runCompleteAnimationAndRemove();
+        m_preloadUI = nullptr;
+    });
+
+    em::log::info("Finished populating songs!");
+    if (m_songs.size() < m_queueLength) m_queueLength = m_songs.size();
+
+    if (m_songs.size() > 1) m_randomSongGenerator = std::uniform_int_distribution<int>(0, m_songs.size() - 1);
+
+    if (m_isInEditor) {
+        checkQueueLength();
+        checkSongPreload();
+    }
+
+    m_isQueueBeingPopulated = false;
+}
+
+void AudioManager::setupPreloadUIFromPath(std::filesystem::path path) {
+    if (!std::filesystem::exists(path)) return;
+    em::log::debug("Populating song total from path...");
+    for (const auto& file : std::filesystem::directory_iterator(path.string())) {
+        if (std::filesystem::is_regular_file(file) && isValidAudioFile(file)) m_preloadUI->m_totalSongs++;
+        if (std::filesystem::is_directory(file)) setupPreloadUIFromPath(file);
+    }
+}
+
+void AudioManager::populateSongsFromPath(std::filesystem::path path) {
+    if (!std::filesystem::exists(path)) return;
+    em::log::debug("Populating songs from path...");
+
+    for (const auto& file : std::filesystem::directory_iterator(path.string())) {
+        if (std::filesystem::is_directory(file)) {
+            // stack overflow from the person with 10000 folders inside each other incoming
+            populateSongsFromPath(file);
+            continue;
+        }
+
+        if (!isValidAudioFile(file)) continue;
+
+        auto source = std::make_shared<AudioSource>(file.path());
+        populateAudioSourceInfo(source);
+        m_songs.push_back(source);
+        geode::Loader::get()->queueInMainThread([this, source]{
+            m_preloadUI->increment(source->m_name);
+        });
 	}
 }
 
-void AudioManager::setup() {
-	this->setupFromOneFolder(Mod::get()->getConfigDir());
-	std::filesystem::path customPath = Mod::get()->getSettingValue<std::filesystem::path>("extra-songs-path");
-
-	if (customPath.string() != "(none)") {
-		if (std::filesystem::exists(customPath)) {
-			log::info("Custom path exists! Loading from it...");
-			this->setupFromOneFolder(customPath);
-		} else {
-			log::warn("Custom path doesn't exist!");
-			this->customPathDoesntExist = true;
-		}
-	}
-
-	log::info("Sounds created! songs={}", this->songs.size());
-
-	if (this->songs.size() == 0) {
-		// oh there's no songs, disable everything
-		this->hasNoSongs = true;
-		return;
-	}
-
-	this->songID = rand() % this->songs.size();
-
-	this->channel->setMode(FMOD_LOOP_OFF);
-
-	this->system->createDSPByType(FMOD_DSP_TYPE_LOWPASS, &this->lowPassFilterDSP);
-	this->lowPassFilterDSP->setParameterFloat(FMOD_DSP_LOWPASS_RESONANCE, 0.f);
+bool AudioManager::isValidAudioFile(std::filesystem::path path) {
+    if (!std::filesystem::is_regular_file(path)) return false;
+    
+    static const std::array<std::string, 4> validFiles = { ".mp3", ".wav", ".ogg", ".flac" };
+    return std::find(validFiles.begin(), validFiles.end(), path.extension()) != validFiles.end();
 }
 
-void AudioManager::tick(float dt) {
-	if (this->hasNoSongs) return;
+void AudioManager::populateAudioSourceInfo(std::shared_ptr<AudioSource> source) {
+    // load song, get info, deload song
+    em::log::debug("Populating audio source info...");
+    geode::log::pushNest();
 
-	// set playtestmusicisplaying
-	this->playtestMusicIsPlaying = FMODAudioEngine::sharedEngine()->isMusicPlaying(0);
-	//log::info("{}", this->playtestMusicIsPlaying);
-	// pause channel if needed
-	this->channel->setPaused(this->isPaused || this->playtestMusicIsPlaying || !this->isInEditor);
-	this->channel->setVolume(Mod::get()->getSettingValue<double>("volume") * this->volume);
+    // FMOD_OPENONLY loads it but does not allocate memory for the actual sound data
+    // so is great for just reading the metadata
+    FMOD::Sound* sound;
+	m_system->createSound(source->m_path.string().c_str(), FMOD_OPENONLY, nullptr, &sound);
 
-	//log::info("low pass: {}/{}, paused: {}, playtesting: {}, notInEditor: {}", this->lowPassStrength, this->actualLowPassCutoff, this->isPaused, this->playtestMusicIsPlaying, !this->isInEditor);
+    // figure out metadata for name and if it exists
+    std::map<std::string, std::string> nameExtensionMap = {
+        { ".mp3", "TIT2" },
+        { ".wav", "INAM" },
+        { ".ogg", "TITLE" },
+        { ".flac", "TITLE" }
+    };
+    FMOD_TAG nameTag;
+    if (sound->getTag(nameExtensionMap[source->m_path.extension().string()].c_str(), 0, &nameTag) == FMOD_ERR_TAGNOTFOUND) {
+        em::log::debug("Using fallback, title not found");
+        source->m_name = figureOutFallbackName(source->m_path);
+    } else source->m_name = populateStringTag(nameTag, true, source);
 
-	if (!this->isInEditor) return;
+    // figure out metadata for artist and if it exists
+    std::map<std::string, std::string> artistExtensionMap = {
+        { ".mp3", "TPE1" },
+        { ".wav", "IART" },
+        { ".ogg", "ARTIST" },
+        { ".flac", "ARTIST" }
+    };
+    FMOD_TAG artistTag;
+    if (sound->getTag(artistExtensionMap[source->m_path.extension().string()].c_str(), 0, &artistTag) == FMOD_ERR_TAGNOTFOUND) {
+        em::log::debug("Using fallback, artist not found");
+        source->m_artist = "Unknown";
+    } else source->m_artist = populateStringTag(artistTag, false);
 
-	// check for low pass filter
-	int nodesAlreadyPresent = SceneManager::get()->getPersistedNodes().size();
-	int lowPassStrengthBefore = this->lowPassStrength;
-	this->lowPassStrength = CCScene::get()->getChildrenCount() - nodesAlreadyPresent;
-	if (this->lowPassStrength < 0) this->lowPassStrength = 0;
-	if (LevelEditorLayer::get()->getChildByID("EditorPauseLayer")) {
-		this->lowPassStrength++;
-	}
+    // only mp3 covers supported for now
+    FMOD_TAG albumCoverTag;
+    if (source->m_path.extension().string() == ".mp3") {
+        FMOD_RESULT albumRes = sound->getTag("APIC", 0, &albumCoverTag);
+        if (albumRes != FMOD_ERR_TAGNOTFOUND) populateAlbumCover(source, albumCoverTag);
+    }
 
-	// and add filter or remove if needed
-	if (this->lowPassStrength != lowPassStrengthBefore) {
-		this->updateLowPassFilter();
-	}
-	this->lowPassFilterDSP->setParameterFloat(FMOD_DSP_LOWPASS_CUTOFF, this->actualLowPassCutoff);
+	sound->getLength(&source->m_length, FMOD_TIMEUNIT_MS);
 
-
-	// check if needs to go to next song
-	bool channelIsPlaying;
-	this->channel->isPlaying(&channelIsPlaying);
-	// so if it's not playing and not paused (i.e it should be playing)...
-	if (!channelIsPlaying && !this->isPaused) {
-		log::info("song is probably finished");
-		this->playNewSong();
-	}
+    geode::log::popNest();
+    em::log::info("Loaded song info for {}!", source->m_name);
+    sound->release();
 }
 
-std::string AudioManager::figureOutFallbackName(UnloadedAudio unloadedSong) {
-	std::string songName;
-	if (Mod::get()->getSettingValue<bool>("unnamed-song-fallback")) songName = unloadedSong.path.filename().string();
-	else songName = Mod::get()->getSettingValue<std::string>("unnamed-song-fallback-custom");
-	return songName;
+std::string AudioManager::populateStringTag(FMOD_TAG tag, bool useTitleFallback, std::shared_ptr<AudioSource> sourceForFallback) {
+    em::log::debug("Populating string tag for {}", tag.name);
+    geode::log::NestScope scope;
+
+    // simdutf::autodetect_encoding does exist but there's no point using it
+    // because it crashes for me trying to read the BOM or whatever and also
+    // since the type is embedded into the tag data anyway as long as
+    // whatever's writing the tag doesnt lie about the data type then it
+    // should be fine
+
+    // in the utf16 checks it looks like adding one seems to remove the
+    // entire bom even though it's two bytes long? or at least it should be
+    // but well this works
+    // sometimes there's still a null byte even though other songs wont so
+    // in filterSongNameThruRegex there's a null byte remover
+    switch (tag.datatype) {
+        case FMOD_TAGDATATYPE_STRING_UTF16: {
+            em::log::debug("Tag is in utf16");
+            // subtract 2 for bom and null byte, divide by two to get utf8 length
+            int length = tag.datalen / 2 - 1;
+            const char16_t* tagDataExceptBOM = (char16_t*)tag.data + 1;
+
+            std::string ret;
+            ret.resize(length);
+            simdutf::result res = simdutf::convert_utf16le_to_utf8_with_errors(tagDataExceptBOM, length, ret.data());
+            if (res.error != simdutf::error_code::SUCCESS) {
+                em::log::warn("Conversion failed at char {}", res.count);
+                return useTitleFallback ? figureOutFallbackName(sourceForFallback->m_path) : "Unknown";
+            }
+
+            return filterNameThruRegex(ret);
+        }
+
+        case FMOD_TAGDATATYPE_STRING_UTF16BE: {
+            em::log::debug("Tag is in utf16 but big endian (very silly)");
+            // subtract 2 for bom and null byte, divide by two to get utf8 length
+            int length = tag.datalen / 2 - 1;
+            const char16_t* tagDataExceptBOM = (char16_t*)tag.data + 1;
+
+            std::string ret;
+            ret.resize(length);
+            simdutf::result res = simdutf::convert_utf16be_to_utf8_with_errors(tagDataExceptBOM, length, ret.data());
+            if (res.error != simdutf::error_code::SUCCESS) {
+                em::log::warn("Conversion failed at char {}", res.count);
+                return useTitleFallback ? figureOutFallbackName(sourceForFallback->m_path) : "Unknown";
+            }
+
+            return filterNameThruRegex(ret);
+        }
+
+        case FMOD_TAGDATATYPE_STRING:
+        case FMOD_TAGDATATYPE_STRING_UTF8: {
+            em::log::debug("Tag is in utf8");
+            return filterNameThruRegex(std::string((char*)tag.data));
+        }
+        
+        default: {
+            // uhhhh
+            em::log::debug("Tag not in known format, using fallback");
+            return useTitleFallback ? figureOutFallbackName(sourceForFallback->m_path) : "Unknown";
+        }
+    }
 }
 
-void AudioManager::playSongID(int id) {
-	// filter for stuff like the BOM or whatever goofy unicode characters artists put in the song titles (WHY DOES MDK PUT A MUSIC NOTE?? IT'S NOT NEEDED)
-	std::regex charsInBigFont("[^\u0020\u0021\u0022\u0023\u0024\u0025\u0026\u0027\u0028\u0029\u002a\u002b\u002c\u002d\u002e\u002f\u0030\u0031\u0032\u0033\u0034\u0035\u0036\u0037\u0038\u0039\u003a\u003b\u003c\u003d\u003e\u003f\u0040\u0041\u0042\u0043\u0044\u0045\u0046\u0047\u0048\u0049\u004a\u004b\u004c\u004d\u004e\u004f\u0050\u0051\u0052\u0053\u0054\u0055\u0056\u0057\u0058\u0059\u005a\u005b\u005c\u005d\u005e\u005f\u0060\u0061\u0062\u0063\u0064\u0065\u0066\u0067\u0068\u0069\u006a\u006b\u006c\u006d\u006e\u006f\u0070\u0071\u0072\u0073\u0074\u0075\u0076\u0077\u0078\u0079\u007a\u007b\u007c\u007d\u007e\u2022]+");
+void AudioManager::populateAlbumCover(std::shared_ptr<AudioSource> source, FMOD_TAG tag) {
+    em::log::debug("Reading album cover info...");
+    geode::log::NestScope scope;
+    // oh baby
+    // this assumes reading the tag and everything is fine
+    // and only supports mp3 APIC tags for now
 
-	log::info("playing song with id {}", id);
-	this->songID = id;
-	this->history.push_back(id);
-	auto usong = this->songs.at(id); // usong means UnloadedSong*
+    // https://id3.org/id3v2.4.0-frames 4.14 Attached Picture
+    char* data = (char*)tag.data;
+    int i = 0;
 
-	// load the song
-	log::info("loading song...");
-	this->system->createSound(usong.path.string().c_str(), FMOD_LOOP_NORMAL, nullptr, &this->song.sound);
-	this->song.sound->setLoopCount(0);
+    char textEncoding = data[i++];
+    std::string mimeType = std::string((const char*)(data + i)); i += mimeType.length();
+    char pictureType = data[i++];
+    std::string description;
+    if (textEncoding == 0x01 || textEncoding == 0x02) {
+        description = "(not read)";
+        i += std::char_traits<char16_t>::length((const char16_t*)(data + i)) * 2 + 2;
+    } else {
+        description = std::string((const char*)(data + i));
+        i += description.length();
+    }
+    void* imageData = data + i + 1;
+    bool imageDataIsURL = false;
 
-	// figure out the metadata tag and if it exists
-	log::info("figuring out metadata...");
-	FMOD_TAG tag;
-	FMOD_RESULT res;
-	std::string tagName;
-	std::string extension = usong.path.extension().string();
-	if (extension == ".mp3") {
-		tagName = "TIT2";
-	} else if (extension == ".wav") {
-		tagName = "INAM";
-	} else if (extension == ".ogg" || extension == ".flac") {
-		tagName = "TITLE";
-	}
-	res = this->song.sound->getTag(tagName.c_str(), 0, &tag);
+    if (mimeType == "-->") {
+        // stupid
+        imageDataIsURL = true;
+    }
 
-	// ... if it doesnt exist:
-	log::info("checking existence...");
-	if (res == FMOD_ERR_TAGNOTFOUND) {
-		log::warn("Name tag not found for song, using fallback");
+    em::log::debug("Album cover info:");
+    geode::log::pushNest();
+        em::log::debug("Encoding: 0x{:02X}", textEncoding);
+        em::log::debug("MIME type: \"{}\"", mimeType);
+        em::log::debug("Picture type 0x{:02X}", pictureType);
+        em::log::debug("Description: \"{}\"", description);
+        em::log::debug("Image data is url: {}", imageDataIsURL);
+    geode::log::popNest();
 
-		this->song.name = this->figureOutFallbackName(usong);
-		log::info("Loaded song {}!", this->song.name);
-	}
+    if (imageDataIsURL) {
+        em::log::debug("Album cover is in URL format!");
+        return;
+    }
 
-	log::debug("Song has a name in metadata");
+    // if there is no image/ prefix, image/ is implied - add it
+    if (mimeType.find("image/") != 0) { mimeType = "image/" + mimeType; }
 
-	// get the song name from metadata
-	std::string songName;
-	const char* songNameAsChar = reinterpret_cast<const char*>(tag.data);
+    auto format = em::utils::mimeTypeToFormat(mimeType);
 
-	switch (tag.datatype) {
-		case FMOD_TAGDATATYPE_STRING_UTF16: {
-			log::debug("Song name is in utf16");
-			std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> converter;
-			songName = converter.to_bytes(reinterpret_cast<const char16_t*>(songNameAsChar));
-			break;
-		}
+    if (format == cocos2d::CCImage::EImageFormat::kFmtUnKnown) {
+        em::log::debug("Album cover is in unsupported format: {}!", mimeType);
+        return;
+    }
 
-		case FMOD_TAGDATATYPE_STRING_UTF16BE: {
-			log::debug("Song name is in utf16 but big endian (very silly)");
-			// silly big endian
-			std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> converter;
-			std::u16string utf16String(reinterpret_cast<const char16_t*>(songNameAsChar), tag.datalen / sizeof(char16_t));
-			for (size_t i = 0; i < utf16String.size(); ++i) {
-				utf16String[i] = (utf16String[i] << 8) | (utf16String[i] >> 8);
-			}
-			songName = converter.to_bytes(utf16String);
-			break;
-		}
+    // finally read it??
+    int length = tag.datalen - i - 1; // minus one for null terminator
+    auto image = new cocos2d::CCImage;
+    // this ignores the last four params if type is a png
+    if (!image->initWithImageData(imageData, length, format, 0, 0, 0, 0)) {
+        em::log::warn("Error creating CCImage from image data for album cover of {}!", source->m_name);
+        delete image;
+        return;
+    }
 
-		case FMOD_TAGDATATYPE_STRING:
-			log::debug("uhh i think this is in utf8");
-		case FMOD_TAGDATATYPE_STRING_UTF8:
-			log::debug("Song name is in utf8 (thanks)");
-			log::debug("raw: {}, length: (datalen:{}, strlen:{})", songNameAsChar, tag.datalen, strlen(songNameAsChar));
-			songName = std::string(songNameAsChar, tag.datalen);
-			break;
-		default:
-			// uhhhh
-			log::info("wtf the song name isnt a string (using fallback)");
-			songName = this->figureOutFallbackName(usong);
-	}
+    em::log::debug("CCImage created, queue cctexture in main thread...");
+    geode::Loader::get()->queueInMainThread([source, image]{
+        auto texture = new cocos2d::CCTexture2D;
+        if (!texture->initWithImage(image)) {
+            em::log::warn("Error creating CCTexture2D from CCImage for album cover of {}!", source->m_name);
+            delete texture;
+            return;
+        }
 
-	this->song.name = songName;
-	log::info("Loaded song {}!", songName);
-
-	// set length
-	this->song.sound->getLength(&this->song.length, FMOD_TIMEUNIT_MS);
-	log::info("curSongLength: {}", this->song.length);
-
-	// play the actual sound
-	this->channel->stop(); // stop current sound
-	this->system->playSound(this->song.sound, nullptr, false, &(this->channel));
-	this->updateLowPassFilter(); // gets removed after playSound for whatever reason
-
-	// replace invalid chars
-	log::debug("Song name before: {}", this->song.name);
-	this->song.name = std::regex_replace(this->song.name, charsInBigFont, Mod::get()->getSettingValue<std::string>("unsupported-characters-fallback"));
-	log::debug("Song name after: {}", this->song.name);
-
-	new Ease(0.f, 1.f, 0.5f, &this->volume);
+        em::log::debug("Album cover cctexture loaded for {}!", source->m_name);
+        source->m_albumCover = texture;
+    });
 }
 
-// this calls AudioManager::playSongID (with a random id)
-void AudioManager::playNewSong() {
-	if (this->hasNoSongs) return;
+std::string AudioManager::figureOutFallbackName(std::filesystem::path path) {
+    // stem is filename without the extension
+    return filterNameThruRegex(path.stem().string());
+}
 
-	// im sure this will be fine, right?
-	int id;
-	if (this->songs.size() == 1) id = 0;
-	else do {
-		id = rand() % this->songs.size();
-	} while (id == this->songID);
+std::string AudioManager::filterNameThruRegex(std::string songName) {
+    size_t potentialNullByte = songName.find('\0');
+    if (potentialNullByte != std::string::npos) songName.erase(potentialNullByte);
 
-	this->playSongID(id);
+    // regex of chars that are in bigFont.fnt
+    // any character from space to ~ and also bullet point (u2022)
+    // this matches any character that isnt that and replaces it with a question mark
+    return std::regex_replace(songName, std::regex("[^ -~•]+"), "?");
+}
+
+
+// this is false advertising it also checks history length
+void AudioManager::checkQueueLength() {
+    while (m_queue.size() < m_queueLength) {
+        // get random song and shove on the end
+        m_queue.push_back(getRandomSong());
+    }
+
+    while (m_history.size() > m_historyLength) {
+        m_history.pop_front();
+    }
 }
 
 void AudioManager::nextSong() {
-	if (this->hasNoSongs) return;
-	new Ease(1.f, 0.f, .5f, &this->volume, [this]() {
-		this->playNewSong();
-	});
+    if (!shouldAllowAudioFunctions()) return;
+
+    em::log::info("next song...");
+    std::shared_ptr<AudioSource> nextSong;
+
+    if (m_queue.size() == 1) nextSong = getCurrentSong();
+    else nextSong = m_queue[1];
+
+    m_history.push_back(getCurrentSong());
+    if (m_queue.size() > 1) m_queue.pop_front();
+
+    checkQueueLength();
+    checkSongPreload();
+    startPlayingCurrentSong();
 }
 
 void AudioManager::prevSong() {
-	if (this->hasNoSongs) return;
-	log::info("size: {}", this->history.size());
-	if (this->history.size() <= 1) return; // this looks wrong but it's not dw
+    if (!shouldAllowAudioFunctions()) return;
 
-	new Ease(1.f, 0.f, .5f, &this->volume, [this]() {
-		this->history.pop_back();
-		this->playSongID(this->history.back());
-		this->history.pop_back(); // call pop_back again bc previous song gets added again in this->playSongID
-	});
+    em::log::info("previous song...");
+    if (m_history.size() == 0) {
+        em::log::info("no songs left");
+        geode::Notification::create("No songs left!", geode::NotificationIcon::None, .1f)->show();
+        return;
+    }
+
+    auto prevSong = m_history.back();
+    m_queue.push_front(prevSong);
+    m_history.pop_back();
+
+    checkQueueLength();
+    checkSongPreload();
+    startPlayingCurrentSong();
 }
 
-void AudioManager::updateLowPassFilter() {
-	if (!Mod::get()->getSettingValue<bool>("low-pass")) {
-		this->channel->removeDSP(this->lowPassFilterDSP);
-		this->actualLowPassCutoff = 1650.f;
-		return;
-	}
-	log::info("updating low pass");
+void AudioManager::rewind() {
+    if (!shouldAllowAudioFunctions()) return;
 
-	if (this->lowPassStrength > 1) {
-		// add it
-		log::info("adding filter");
-		this->channel->addDSP(0, this->lowPassFilterDSP);
-		new Ease(this->actualLowPassCutoff, 1650.f - this->lowPassStrength * 250, .5f, &this->actualLowPassCutoff);
-	} else {
-		log::info("removing filter");
-		// remove it
-		this->channel->removeDSP(this->lowPassFilterDSP);
-		this->actualLowPassCutoff = 1650.f;
-	}
+    int pos = getCurrentSongPosition();
+    if (pos < 12000) {
+        prevSong();
+        return;
+    }
+
+    m_channel->setPosition(pos - 10000, FMOD_TIMEUNIT_MS);
 }
 
-// used for sliders
-float AudioManager::getSongPercentage() {
-	unsigned int curPos;
-	this->channel->getPosition(&curPos, FMOD_TIMEUNIT_MS);
-	return curPos / (float)this->song.length;
+void AudioManager::fastForward() {
+    if (!shouldAllowAudioFunctions()) return;
+
+    int pos = getCurrentSongPosition();
+    int len = getCurrentSongLength();
+    if (pos > len - 12000) {
+        nextSong();
+        return;
+    }
+
+    m_channel->setPosition(pos + 10000, FMOD_TIMEUNIT_MS);
 }
 
-int AudioManager::getSongMS() {
-	unsigned int curPos;
-	this->channel->getPosition(&curPos, FMOD_TIMEUNIT_MS);
+
+void AudioManager::update(float dt) {
+    // if we're waiting for a song to load, check again
+    if (m_playCurrentSongQueuedForLoad) startPlayingCurrentSong();
+
+    // update easings
+    std::vector<Easer*> easersToRemove = {};
+    for (auto& easer : m_easers) {
+        easer.update(dt);
+        if (easer.m_finished) easersToRemove.push_back(&easer);
+    }
+    for (auto* easer : easersToRemove) { m_easers.erase(std::remove(m_easers.begin(), m_easers.end(), *easer), m_easers.end()); }
+
+    bool channelIsPlaying = false;
+    m_channel->isPlaying(&channelIsPlaying);
+    if (!channelIsPlaying && shouldSongBePlaying()) {
+        em::log::debug("channel isnt playing but should be, song ended?");
+        nextSong();
+    }
+
+    if (m_isInEditor) {
+        int persistedNodes = geode::SceneManager::get()->getPersistedNodes().size();
+        int lowPassStrength = cocos2d::CCScene::get()->getChildrenCount() - persistedNodes - 1;
+        if (LevelEditorLayer::get()->getChildByID("EditorPauseLayer")) lowPassStrength++;
+        if (cocos2d::CCScene::get()->getChildByID("thesillydoggo.qolmod/QOLModButton")) lowPassStrength--;
+        if (cocos2d::CCScene::get()->getChildByType<SongInfoPopup>(0)) lowPassStrength = 0;
+
+        if (lowPassStrength != m_lowPassStrength && geode::Mod::get()->getSettingValue<bool>("low-pass")) {
+            m_lowPassStrength = lowPassStrength;
+            updateLowPassFilter();
+        }
+    }
+    
+    // our channel id is more than likely one, but there is a certain scenario where
+    // it is two, but nobody will ever find it and only I know how so it should be fine
+    m_isEditorAudioPlaying = FMODAudioEngine::sharedEngine()->isMusicPlaying(0) || FMODAudioEngine::sharedEngine()->isMusicPlaying(2);
+    m_channel->setPaused(!shouldSongBePlaying());
+    m_channel->setVolume(geode::Mod::get()->getSettingValue<double>("volume"));
+    m_lowPassFilter->setParameterFloat(FMOD_DSP_LOWPASS_CUTOFF, m_lowPassEasedCutoff);
+}
+
+void AudioManager::startPlayingCurrentSong() {
+    em::log::debug("start playing m_queue[0]");
+    if (m_channel) m_channel->stop();
+
+    if (!getCurrentSong()->m_hasLoadedAudio) {
+        // uh oh
+        em::log::debug("uh oh not loaded audio yet, m_playCurrentSongQueuedForLoad = {}", m_playCurrentSongQueuedForLoad);
+
+        getCurrentSong()->loadAudioThreaded();
+        m_playCurrentSongQueuedForLoad = true;
+        return;
+    }
+
+    // now has loaded audio at this point
+    m_playCurrentSongQueuedForLoad = false;
+    auto ret = m_system->playSound(getCurrentSong()->m_sound, nullptr, false, &m_channel); 
+    updateLowPassFilter();
+    if (ret != FMOD_OK) em::log::warn("FMOD error: {} (0x{:02X})", FMOD_ErrorString(ret), (int)ret);
+    em::log::debug("Music time!");
+}
+
+std::shared_ptr<AudioSource> AudioManager::getCurrentSong() {
+    if (m_queue.empty()) return m_songs.front(); // fallback
+    return m_queue.front();
+}
+
+unsigned int AudioManager::getCurrentSongPosition() {
+    unsigned int curPos;
+	m_channel->getPosition(&curPos, FMOD_TIMEUNIT_MS);
 	return curPos;
 }
 
-// also used for sliders
-void AudioManager::setSongPercentage(float percentage) {
-	this->channel->setPosition(static_cast<unsigned int>(percentage * this->song.length), FMOD_TIMEUNIT_MS);
+unsigned int AudioManager::getCurrentSongLength() {
+    return getCurrentSong()->m_length;
+}
+
+
+bool AudioManager::shouldSongBePlaying() {
+    return !m_isPaused && m_isInEditor && !m_isEditorAudioPlaying && !m_playCurrentSongQueuedForLoad && !m_songs.empty() && !m_isQueueBeingPopulated;
+}
+
+bool AudioManager::shouldAllowAudioFunctions() {
+    return m_isInEditor && !m_playCurrentSongQueuedForLoad && !m_songs.empty() && !m_isQueueBeingPopulated;
+}
+
+
+std::shared_ptr<AudioSource> AudioManager::getRandomSong() {
+    // gets a random song that isnt in the queue currently
+    std::shared_ptr<AudioSource> ret;
+
+    do {
+        ret = m_songs[m_randomSongGenerator(m_gen)];
+    } while (std::find(m_queue.begin(), m_queue.end(), ret) != m_queue.end());
+
+    return ret;
+}
+
+
+void AudioManager::updateLowPassFilter() {
+    em::log::debug("updating low pass filter...");
+
+    if (m_lowPassStrength <= 0) {
+        em::log::debug("removing low pass filter, m_lowPassStrength={}", m_lowPassStrength);
+        m_channel->removeDSP(m_lowPassFilter);
+        return;
+    }
+
+    // wont work if there already is one
+    m_channel->addDSP(0, m_lowPassFilter);
+    float cutoff = 1700.f - m_lowPassStrength * 250;
+    em::log::debug("setting low pass filter (m_lowPassStrength={}, calculated cutoff={})", m_lowPassStrength, cutoff);
+    m_easers.push_back(Easer(&m_lowPassEasedCutoff, m_lowPassEasedCutoff, cutoff, .5f));
+}
+
+
+void AudioManager::enterEditor() {
+    m_isInEditor = true;
+    if (m_songs.empty()) return;
+
+    checkQueueLength();
+    startPlayingCurrentSong();
+}
+
+void AudioManager::exitEditor() {
+    m_isInEditor = false;
+    if (m_songs.empty()) return;
+
+    m_channel->stop(); // will cause it to be freed
+    m_channel = nullptr;
+    m_queue.clear();
+    m_history.clear();
+}
+
+void AudioManager::checkSongPreload() {
+    em::log::debug("Check song preload...");
+
+    // go through all songs and see...
+    for (auto song : m_songs) {
+        // check if it's either in the first three songs in the queue or first
+        // three songs in history, if so it should be loaded
+        // ternary used for readability
+        // just dont worry about this it's simple and there's not a similarly
+        // performant way to rewrite this without it being massive
+        bool shouldBeLoaded = \
+            (m_queue.size() < 3 ? true : (m_queue[0] == song || m_queue[1] == song || m_queue[2] == song)) ||
+            (m_history.size() < 3 ? true : (m_history[0] == song || m_history[1] == song || m_history[2] == song));
+
+        // see if we need to delete or load the sound
+        if (song->m_hasLoadedAudio && !shouldBeLoaded) {
+            // delete
+            song->m_sound->release();
+            song->m_sound = nullptr;
+            song->m_hasLoadedAudio = false;
+        } else if (!song->m_hasLoadedAudio && shouldBeLoaded) {
+            // load
+            song->loadAudioThreaded();
+        }
+    }
 }

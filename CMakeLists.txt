@@ -6,13 +6,12 @@ set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 
 project(EditorMusic VERSION 1.0.0)
 
-add_library(${PROJECT_NAME} SHARED
-    src/AudioInfoPopup.cpp
-    src/AudioManager.cpp
-    src/main.cpp
-    src/Keybinds.cpp
-    src/Ease.cpp
+file(GLOB_RECURSE SOURCES
+    src/*.cpp
+    src/hooks/*.cpp
 )
+add_library(${PROJECT_NAME} SHARED ${SOURCES})
+target_include_directories(${PROJECT_NAME} PRIVATE lib/simdutf)
 
 if (NOT DEFINED ENV{GEODE_SDK})
     message(FATAL_ERROR "Unable to find Geode SDK! Please define GEODE_SDK environment variable to point to Geode")
@@ -21,5 +20,8 @@ else()
 endif()
 
 add_subdirectory($ENV{GEODE_SDK} ${CMAKE_CURRENT_BINARY_DIR}/geode)
+
+CPMAddPackage("gh:simdutf/simdutf@6.0.0")
+target_link_libraries(${PROJECT_NAME} simdutf)
 
 setup_geode_mod(${PROJECT_NAME})
