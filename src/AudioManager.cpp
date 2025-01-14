@@ -5,6 +5,7 @@
 #include <locale>
 #include "simdutf.h"
 #include "utils.hpp"
+#include "log.hpp"
 
 AudioManager& AudioManager::get() {
     static AudioManager instance;
@@ -39,7 +40,7 @@ AudioManager::AudioManager()
     , m_randomSongGenerator(0, 1) {}
 
 void AudioManager::init() {
-    geode::log::debug("AudioManager::init()");
+    em::log::debug("AudioManager::init()");
     populateSongs();
     m_system->createDSPByType(FMOD_DSP_TYPE_LOWPASS, &m_lowPassFilter);
 	m_lowPassFilter->setParameterFloat(FMOD_DSP_LOWPASS_RESONANCE, 0.f);
@@ -64,7 +65,7 @@ void AudioManager::populateSongs() {
 
 void AudioManager::populateSongsThread() {
     geode::utils::thread::setName("EditorMusic Song Loading");
-    geode::log::info("Populating songs...");
+    em::log::info("Populating songs...");
 
     geode::log::pushNest();
     setupPreloadUIFromPath(geode::Mod::get()->getConfigDir());
@@ -78,7 +79,7 @@ void AudioManager::populateSongsThread() {
         m_preloadUI = nullptr;
     });
 
-    geode::log::info("Finished populating songs!");
+    em::log::info("Finished populating songs!");
     if (m_songs.size() < m_queueLength) m_queueLength = m_songs.size();
 
     if (m_songs.size() > 1) m_randomSongGenerator = std::uniform_int_distribution<int>(0, m_songs.size() - 1);
@@ -93,7 +94,7 @@ void AudioManager::populateSongsThread() {
 
 void AudioManager::setupPreloadUIFromPath(std::filesystem::path path) {
     if (!std::filesystem::exists(path)) return;
-    geode::log::debug("Populating song total from path...");
+    em::log::debug("Populating song total from path...");
     for (const auto& file : std::filesystem::directory_iterator(path.string())) {
         if (std::filesystem::is_regular_file(file) && isValidAudioFile(file)) m_preloadUI->m_totalSongs++;
         if (std::filesystem::is_directory(file)) setupPreloadUIFromPath(file);
@@ -102,7 +103,7 @@ void AudioManager::setupPreloadUIFromPath(std::filesystem::path path) {
 
 void AudioManager::populateSongsFromPath(std::filesystem::path path) {
     if (!std::filesystem::exists(path)) return;
-    geode::log::debug("Populating songs from path...");
+    em::log::debug("Populating songs from path...");
 
     for (const auto& file : std::filesystem::directory_iterator(path.string())) {
         if (std::filesystem::is_directory(file)) {
@@ -131,7 +132,7 @@ bool AudioManager::isValidAudioFile(std::filesystem::path path) {
 
 void AudioManager::populateAudioSourceInfo(std::shared_ptr<AudioSource> source) {
     // load song, get info, deload song
-    geode::log::debug("Populating audio source info...");
+    em::log::debug("Populating audio source info...");
     geode::log::pushNest();
 
     // FMOD_OPENONLY loads it but does not allocate memory for the actual sound data
@@ -148,7 +149,7 @@ void AudioManager::populateAudioSourceInfo(std::shared_ptr<AudioSource> source) 
     };
     FMOD_TAG nameTag;
     if (sound->getTag(nameExtensionMap[source->m_path.extension().string()].c_str(), 0, &nameTag) == FMOD_ERR_TAGNOTFOUND) {
-        geode::log::debug("Using fallback, title not found");
+        em::log::debug("Using fallback, title not found");
         source->m_name = figureOutFallbackName(source->m_path);
     } else source->m_name = populateStringTag(nameTag, true, source);
 
@@ -161,7 +162,7 @@ void AudioManager::populateAudioSourceInfo(std::shared_ptr<AudioSource> source) 
     };
     FMOD_TAG artistTag;
     if (sound->getTag(artistExtensionMap[source->m_path.extension().string()].c_str(), 0, &artistTag) == FMOD_ERR_TAGNOTFOUND) {
-        geode::log::debug("Using fallback, artist not found");
+        em::log::debug("Using fallback, artist not found");
         source->m_artist = "Unknown";
     } else source->m_artist = populateStringTag(artistTag, false);
 
@@ -175,12 +176,12 @@ void AudioManager::populateAudioSourceInfo(std::shared_ptr<AudioSource> source) 
 	sound->getLength(&source->m_length, FMOD_TIMEUNIT_MS);
 
     geode::log::popNest();
-    geode::log::info("Loaded song info for {}!", source->m_name);
+    em::log::info("Loaded song info for {}!", source->m_name);
     sound->release();
 }
 
 std::string AudioManager::populateStringTag(FMOD_TAG tag, bool useTitleFallback, std::shared_ptr<AudioSource> sourceForFallback) {
-    geode::log::debug("Populating string tag for {}", tag.name);
+    em::log::debug("Populating string tag for {}", tag.name);
     geode::log::NestScope scope;
 
     // simdutf::autodetect_encoding does exist but there's no point using it
@@ -196,7 +197,7 @@ std::string AudioManager::populateStringTag(FMOD_TAG tag, bool useTitleFallback,
     // in filterSongNameThruRegex there's a null byte remover
     switch (tag.datatype) {
         case FMOD_TAGDATATYPE_STRING_UTF16: {
-            geode::log::debug("Tag is in utf16");
+            em::log::debug("Tag is in utf16");
             // subtract 2 for bom and null byte, divide by two to get utf8 length
             int length = tag.datalen / 2 - 1;
             const char16_t* tagDataExceptBOM = (char16_t*)tag.data + 1;
@@ -205,7 +206,7 @@ std::string AudioManager::populateStringTag(FMOD_TAG tag, bool useTitleFallback,
             ret.resize(length);
             simdutf::result res = simdutf::convert_utf16le_to_utf8_with_errors(tagDataExceptBOM, length, ret.data());
             if (res.error != simdutf::error_code::SUCCESS) {
-                geode::log::warn("Conversion failed at char {}", res.count);
+                em::log::warn("Conversion failed at char {}", res.count);
                 return useTitleFallback ? figureOutFallbackName(sourceForFallback->m_path) : "Unknown";
             }
 
@@ -213,7 +214,7 @@ std::string AudioManager::populateStringTag(FMOD_TAG tag, bool useTitleFallback,
         }
 
         case FMOD_TAGDATATYPE_STRING_UTF16BE: {
-            geode::log::debug("Tag is in utf16 but big endian (very silly)");
+            em::log::debug("Tag is in utf16 but big endian (very silly)");
             // subtract 2 for bom and null byte, divide by two to get utf8 length
             int length = tag.datalen / 2 - 1;
             const char16_t* tagDataExceptBOM = (char16_t*)tag.data + 1;
@@ -222,7 +223,7 @@ std::string AudioManager::populateStringTag(FMOD_TAG tag, bool useTitleFallback,
             ret.resize(length);
             simdutf::result res = simdutf::convert_utf16be_to_utf8_with_errors(tagDataExceptBOM, length, ret.data());
             if (res.error != simdutf::error_code::SUCCESS) {
-                geode::log::warn("Conversion failed at char {}", res.count);
+                em::log::warn("Conversion failed at char {}", res.count);
                 return useTitleFallback ? figureOutFallbackName(sourceForFallback->m_path) : "Unknown";
             }
 
@@ -231,20 +232,20 @@ std::string AudioManager::populateStringTag(FMOD_TAG tag, bool useTitleFallback,
 
         case FMOD_TAGDATATYPE_STRING:
         case FMOD_TAGDATATYPE_STRING_UTF8: {
-            geode::log::debug("Tag is in utf8");
+            em::log::debug("Tag is in utf8");
             return filterNameThruRegex(std::string((char*)tag.data));
         }
         
         default: {
             // uhhhh
-            geode::log::debug("Tag not in known format, using fallback");
+            em::log::debug("Tag not in known format, using fallback");
             return useTitleFallback ? figureOutFallbackName(sourceForFallback->m_path) : "Unknown";
         }
     }
 }
 
 void AudioManager::populateAlbumCover(std::shared_ptr<AudioSource> source, FMOD_TAG tag) {
-    geode::log::debug("Reading album cover info...");
+    em::log::debug("Reading album cover info...");
     geode::log::NestScope scope;
     // oh baby
     // this assumes reading the tag and everything is fine
@@ -273,17 +274,17 @@ void AudioManager::populateAlbumCover(std::shared_ptr<AudioSource> source, FMOD_
         imageDataIsURL = true;
     }
 
-    geode::log::debug("Album cover info:");
+    em::log::debug("Album cover info:");
     geode::log::pushNest();
-        geode::log::debug("Encoding: 0x{:02X}", textEncoding);
-        geode::log::debug("MIME type: \"{}\"", mimeType);
-        geode::log::debug("Picture type 0x{:02X}", pictureType);
-        geode::log::debug("Description: \"{}\"", description);
-        geode::log::debug("Image data is url: {}", imageDataIsURL);
+        em::log::debug("Encoding: 0x{:02X}", textEncoding);
+        em::log::debug("MIME type: \"{}\"", mimeType);
+        em::log::debug("Picture type 0x{:02X}", pictureType);
+        em::log::debug("Description: \"{}\"", description);
+        em::log::debug("Image data is url: {}", imageDataIsURL);
     geode::log::popNest();
 
     if (imageDataIsURL) {
-        geode::log::debug("Album cover is in URL format!");
+        em::log::debug("Album cover is in URL format!");
         return;
     }
 
@@ -293,7 +294,7 @@ void AudioManager::populateAlbumCover(std::shared_ptr<AudioSource> source, FMOD_
     auto format = em::utils::mimeTypeToFormat(mimeType);
 
     if (format == cocos2d::CCImage::EImageFormat::kFmtUnKnown) {
-        geode::log::debug("Album cover is in unsupported format: {}!", mimeType);
+        em::log::debug("Album cover is in unsupported format: {}!", mimeType);
         return;
     }
 
@@ -302,21 +303,21 @@ void AudioManager::populateAlbumCover(std::shared_ptr<AudioSource> source, FMOD_
     auto image = new cocos2d::CCImage;
     // this ignores the last four params if type is a png
     if (!image->initWithImageData(imageData, length, format, 0, 0, 0, 0)) {
-        geode::log::warn("Error creating CCImage from image data for album cover of {}!", source->m_name);
+        em::log::warn("Error creating CCImage from image data for album cover of {}!", source->m_name);
         delete image;
         return;
     }
 
-    geode::log::debug("CCImage created, queue cctexture in main thread...");
+    em::log::debug("CCImage created, queue cctexture in main thread...");
     geode::Loader::get()->queueInMainThread([source, image]{
         auto texture = new cocos2d::CCTexture2D;
         if (!texture->initWithImage(image)) {
-            geode::log::warn("Error creating CCTexture2D from CCImage for album cover of {}!", source->m_name);
+            em::log::warn("Error creating CCTexture2D from CCImage for album cover of {}!", source->m_name);
             delete texture;
             return;
         }
 
-        geode::log::debug("Album cover cctexture loaded for {}!", source->m_name);
+        em::log::debug("Album cover cctexture loaded for {}!", source->m_name);
         source->m_albumCover = texture;
     });
 }
@@ -352,7 +353,7 @@ void AudioManager::checkQueueLength() {
 void AudioManager::nextSong() {
     if (!shouldAllowAudioFunctions()) return;
 
-    geode::log::info("next song...");
+    em::log::info("next song...");
     std::shared_ptr<AudioSource> nextSong;
 
     if (m_queue.size() == 1) nextSong = getCurrentSong();
@@ -369,10 +370,10 @@ void AudioManager::nextSong() {
 void AudioManager::prevSong() {
     if (!shouldAllowAudioFunctions()) return;
 
-    geode::log::info("previous song...");
+    em::log::info("previous song...");
     if (m_history.size() == 0) {
-        geode::log::info("no songs left");
-        geode::Notification::create("No songs left!", geode::NotificationIcon::None, .7f);
+        em::log::info("no songs left");
+        geode::Notification::create("No songs left!", geode::NotificationIcon::None, .1f)->show();
         return;
     }
 
@@ -426,7 +427,7 @@ void AudioManager::update(float dt) {
     bool channelIsPlaying = false;
     m_channel->isPlaying(&channelIsPlaying);
     if (!channelIsPlaying && shouldSongBePlaying()) {
-        geode::log::debug("channel isnt playing but should be, song ended?");
+        em::log::debug("channel isnt playing but should be, song ended?");
         nextSong();
     }
 
@@ -443,18 +444,21 @@ void AudioManager::update(float dt) {
         }
     }
     
+    // our channel id is more than likely one, but there is a certain scenario where
+    // it is two, but nobody will ever find it and only I know how so it should be fine
+    m_isEditorAudioPlaying = FMODAudioEngine::sharedEngine()->isMusicPlaying(0) || FMODAudioEngine::sharedEngine()->isMusicPlaying(2);
     m_channel->setPaused(!shouldSongBePlaying());
     m_channel->setVolume(geode::Mod::get()->getSettingValue<double>("volume"));
     m_lowPassFilter->setParameterFloat(FMOD_DSP_LOWPASS_CUTOFF, m_lowPassEasedCutoff);
 }
 
 void AudioManager::startPlayingCurrentSong() {
-    geode::log::debug("start playing m_queue[0]");
+    em::log::debug("start playing m_queue[0]");
     if (m_channel) m_channel->stop();
 
     if (!getCurrentSong()->m_hasLoadedAudio) {
         // uh oh
-        geode::log::debug("uh oh not loaded audio yet, m_playCurrentSongQueuedForLoad = {}", m_playCurrentSongQueuedForLoad);
+        em::log::debug("uh oh not loaded audio yet, m_playCurrentSongQueuedForLoad = {}", m_playCurrentSongQueuedForLoad);
 
         getCurrentSong()->loadAudioThreaded();
         m_playCurrentSongQueuedForLoad = true;
@@ -465,8 +469,8 @@ void AudioManager::startPlayingCurrentSong() {
     m_playCurrentSongQueuedForLoad = false;
     auto ret = m_system->playSound(getCurrentSong()->m_sound, nullptr, false, &m_channel); 
     updateLowPassFilter();
-    if (ret != FMOD_OK) geode::log::warn("FMOD error: {} (0x{:02X})", FMOD_ErrorString(ret), (int)ret);
-    geode::log::debug("Music time!");
+    if (ret != FMOD_OK) em::log::warn("FMOD error: {} (0x{:02X})", FMOD_ErrorString(ret), (int)ret);
+    em::log::debug("Music time!");
 }
 
 std::shared_ptr<AudioSource> AudioManager::getCurrentSong() {
@@ -507,10 +511,10 @@ std::shared_ptr<AudioSource> AudioManager::getRandomSong() {
 
 
 void AudioManager::updateLowPassFilter() {
-    geode::log::debug("updating low pass filter...");
+    em::log::debug("updating low pass filter...");
 
     if (m_lowPassStrength <= 0) {
-        geode::log::debug("removing low pass filter, m_lowPassStrength={}", m_lowPassStrength);
+        em::log::debug("removing low pass filter, m_lowPassStrength={}", m_lowPassStrength);
         m_channel->removeDSP(m_lowPassFilter);
         return;
     }
@@ -518,7 +522,7 @@ void AudioManager::updateLowPassFilter() {
     // wont work if there already is one
     m_channel->addDSP(0, m_lowPassFilter);
     float cutoff = 1700.f - m_lowPassStrength * 250;
-    geode::log::debug("setting low pass filter (m_lowPassStrength={}, calculated cutoff={})", m_lowPassStrength, cutoff);
+    em::log::debug("setting low pass filter (m_lowPassStrength={}, calculated cutoff={})", m_lowPassStrength, cutoff);
     m_easers.push_back(Easer(&m_lowPassEasedCutoff, m_lowPassEasedCutoff, cutoff, .5f));
 }
 
@@ -542,7 +546,7 @@ void AudioManager::exitEditor() {
 }
 
 void AudioManager::checkSongPreload() {
-    geode::log::debug("Check song preload...");
+    em::log::debug("Check song preload...");
 
     // go through all songs and see...
     for (auto song : m_songs) {

@@ -2,6 +2,7 @@
 #include <Geode/ui/GeodeUI.hpp>
 #include "../AudioManager.hpp"
 #include "../utils.hpp"
+#include "../log.hpp"
 
 SongInfoPopup* SongInfoPopup::create() {
     auto ret = new SongInfoPopup;
@@ -222,10 +223,10 @@ void SongInfoPopup::updateAlbumCover() {
     if (m_albumCoverSprite) m_albumCoverSprite->removeFromParent();
 
     if (m_currentSong->m_albumCover) {
-        geode::log::debug("Album cover found for {}", m_currentSong->m_name);
+        em::log::debug("Album cover found for {}", m_currentSong->m_name);
         m_albumCoverSprite = cocos2d::CCSprite::createWithTexture(m_currentSong->m_albumCover);
     } else {
-        geode::log::debug("No album cover found for {}, using fallback...", m_currentSong->m_name);
+        em::log::debug("No album cover found for {}, using fallback...", m_currentSong->m_name);
         m_albumCoverSprite = cocos2d::CCSprite::create("album-placeholder.png"_spr);
     }
 

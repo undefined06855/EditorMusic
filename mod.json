@@ -14,12 +14,12 @@
 	"dependencies": [
 		{
 			"id": "geode.node-ids",
-			"version": "1.18.0",
+			"version": "1.19.0",
 			"importance": "required"
 		},
 		{
 			"id": "geode.custom-keybinds",
-			"version": "1.10.0",
+			"version": "1.10.1",
 			"importance": "required"
 		}
 	],
@@ -68,6 +68,12 @@
 		"menulayer-load": {
 			"name": "Menulayer load",
 			"description": "Makes song loading start when you enter the main menu, instead of when the mod loads.",
+			"type": "bool",
+			"default": false
+		},
+		"enable-log": {
+			"name": "Enable logging",
+			"description": "Enables logging for easier debugging - will make very large log sizes!!!",
 			"type": "bool",
 			"default": false
 		}

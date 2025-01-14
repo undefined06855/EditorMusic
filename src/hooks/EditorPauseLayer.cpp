@@ -1,27 +1,28 @@
 #include "EditorPauseLayer.hpp"
 #include "../AudioManager.hpp"
 #include "../ui/CurrentSongNode.hpp"
+#include "../log.hpp"
 
 void HookedEditorPauseLayer::onModify(auto& self) {
     if (!self.setHookPriorityAfterPost("EditorPauseLayer::init", "hjfod.betteredit")) {
-        geode::log::warn("Hook priority could not be set - will cause incompats with betteredit!");
+        em::log::warn("Hook priority could not be set - will cause incompats with betteredit!");
     }
 }
 
 void HookedEditorPauseLayer::onExitEditor(cocos2d::CCObject* sender) {
-    geode::log::info("Exited editor, onExitEditor");
+    em::log::info("Exited editor, onExitEditor");
     AudioManager::get().exitEditor();
     EditorPauseLayer::onExitEditor(sender);
 }
 
 void HookedEditorPauseLayer::onSaveAndExit(cocos2d::CCObject* sender) {
-    geode::log::info("Exited editor, onSaveAndExit");
+    em::log::info("Exited editor, onSaveAndExit");
     AudioManager::get().exitEditor();
     EditorPauseLayer::onSaveAndExit(sender);
 }
 
 void HookedEditorPauseLayer::onSaveAndPlay(cocos2d::CCObject* sender) {
-    geode::log::info("Exited editor, onSaveAndPlay");
+    em::log::info("Exited editor, onSaveAndPlay");
     AudioManager::get().exitEditor();
     EditorPauseLayer::onSaveAndPlay(sender);
 }
