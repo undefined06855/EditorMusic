@@ -46,8 +46,10 @@ void AudioManager::init() {
 	m_lowPassFilter->setParameterFloat(FMOD_DSP_LOWPASS_RESONANCE, 0.f);
 
     // i think this fixes stuff but idk not sure
+#ifndef GEODE_IS_ANDROID
     std::locale::global(std::locale{".utf-8"});
     std::setlocale(LC_ALL, ".utf-8");
+#endif
 }
 
 void AudioManager::populateSongs() {
