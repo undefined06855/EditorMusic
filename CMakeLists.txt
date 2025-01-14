@@ -7,7 +7,6 @@ set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 project(EditorMusic VERSION 1.0.0)
 
 file(GLOB_RECURSE SOURCES
-    lib/*/*.cpp
     src/*.cpp
     src/hooks/*.cpp
 )
@@ -21,5 +20,8 @@ else()
 endif()
 
 add_subdirectory($ENV{GEODE_SDK} ${CMAKE_CURRENT_BINARY_DIR}/geode)
+
+CPMAddPackage("gh:simdutf/simdutf@6.0.0")
+target_link_libraries(${PROJECT_NAME} simdutf)
 
 setup_geode_mod(${PROJECT_NAME})
