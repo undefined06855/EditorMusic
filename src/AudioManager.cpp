@@ -6,6 +6,7 @@
 #include "simdutf.h"
 #include "utils.hpp"
 #include "log.hpp"
+#include "eclipse.hpp"
 
 AudioManager& AudioManager::get() {
     static AudioManager instance;
@@ -86,6 +87,8 @@ void AudioManager::populateSongsThread() {
         checkQueueLength();
         checkSongPreload();
     }
+
+    em::rift_labels::set(em::rift_labels::g_labelNumSongs, (int64_t)m_songs.size());
 
     m_isQueueBeingPopulated = false;
 }
@@ -454,6 +457,11 @@ void AudioManager::update(float dt) {
     m_channel->setPaused(!shouldSongBePlaying());
     m_channel->setVolume(geode::Mod::get()->getSettingValue<double>("volume"));
     m_lowPassFilter->setParameterFloat(FMOD_DSP_LOWPASS_CUTOFF, m_lowPassEasedCutoff);
+
+    if (shouldAllowAudioFunctions()) {
+        em::rift_labels::set(em::rift_labels::g_labelEditorSongDuration, em::utils::formatTime(getCurrentSongPosition()));
+        em::rift_labels::set(em::rift_labels::g_labelEditorSongTimestamp, em::utils::formatTime(getCurrentSongLength()));
+    }
 }
 
 void AudioManager::startPlayingCurrentSong() {
@@ -475,6 +483,9 @@ void AudioManager::startPlayingCurrentSong() {
     updateLowPassFilter();
     if (ret != FMOD_OK) em::log::warn("FMOD error: {} (0x{:02X})", FMOD_ErrorString(ret), (int)ret);
     em::log::debug("Music time!");
+
+    em::rift_labels::set(em::rift_labels::g_labelCurrentSong, getCurrentSong()->m_name);
+    em::rift_labels::set(em::rift_labels::g_labelCurrentSongArtist, getCurrentSong()->m_artist);
 }
 
 std::shared_ptr<AudioSource> AudioManager::getCurrentSong() {

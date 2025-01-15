@@ -1,6 +1,7 @@
 #include "AudioManager.hpp"
 #include "ui/SongInfoPopup.hpp"
 #include "settings/ReloadSongSetting.hpp"
+#include "eclipse.hpp"
 
 $on_mod(Loaded) {
     if (!geode::Mod::get()->getSettingValue<bool>("menulayer-load")) AudioManager::get().init();
@@ -27,6 +28,9 @@ $on_mod(Loaded) {
     });
 
     (void)geode::Mod::get()->registerCustomSettingType("reload-song-button", &ReloadSongSetting::parse);
+
+    em::rift_labels::g_isEclipseLoaded = geode::Loader::get()->isModLoaded("eclipse.eclipse-menu");
+    if (em::rift_labels::g_isEclipseLoaded) geode::log::debug("hi eclipse nice to meet you i have some variables for you");
 }
 
 

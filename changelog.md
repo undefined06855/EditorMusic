@@ -1,4 +1,6 @@
 # EditorMusic
+## v2.1.2
+- Rift label support to allow you to use EditorMusic info in Eclipse Discord Rich Presence!
 ## v2.1.1
 - MacOS support! (Erymanthus)
 ## v2.1.0
