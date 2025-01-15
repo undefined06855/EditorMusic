@@ -1,6 +1,7 @@
 #pragma once
 #include "../AudioSource.hpp"
 #include "ProgressBar.hpp"
+#include <Geode/ui/LoadingSpinner.hpp>
 
 class SongInfoPopup : public geode::Popup<> {
 public:

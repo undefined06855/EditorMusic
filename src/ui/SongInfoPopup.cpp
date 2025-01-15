@@ -1,6 +1,5 @@
 #include "SongInfoPopup.hpp"
 #include <Geode/ui/GeodeUI.hpp>
-#include <Geode/ui/LoadingSpinner.hpp>
 #include "../AudioManager.hpp"
 #include "../utils.hpp"
 #include "../log.hpp"
