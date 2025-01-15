@@ -17,7 +17,7 @@ void HookedEditorPauseLayer::onExitEditor(cocos2d::CCObject* sender) {
 }
 #else
 void HookedEditorPauseLayer::FLAlert_Clicked(FLAlertLayer* p0, bool btnTwo) {
-    if (p0->getTag() == 1) {
+    if (p0->getTag() == 1 && btnTwo) {
         AudioManager::get().exitEditor();
         em::log::info("Exited editor, FLAlert_Clicked with sender tag 1");
     }
