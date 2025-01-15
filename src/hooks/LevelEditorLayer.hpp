@@ -1,4 +1,4 @@
-#ifndef GEODE_IS_MACOS
+#ifdef GEODE_IS_WINDOWS
 #include <Geode/modify/LevelEditorLayer.hpp>
 
 class $modify(HookedLevelEditorLayer, LevelEditorLayer) {

@@ -1,4 +1,4 @@
-#ifndef GEODE_IS_MACOS
+#ifdef GEODE_IS_WINDOWS
 #include <geode.custom-keybinds/include/Keybinds.hpp>
 #include "AudioManager.hpp"
 #include "log.hpp"
