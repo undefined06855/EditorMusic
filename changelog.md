@@ -1,4 +1,6 @@
 # EditorMusic
+## v2.1.1
+- MacOS support! (Erymanthus)
 ## v2.1.0
 - Rearrange order of some settings
 - Fix crash with one song coming from a level (#27)
@@ -16,6 +18,8 @@
 - Fixed loading issues (#23)
 - Now runs on a queue and history system, so songs should not be repeated
 - Now supports folders inside the music list
+
+
 ## v1.3.11
 - Fixed UI in pause layer
 ## v1.3.10

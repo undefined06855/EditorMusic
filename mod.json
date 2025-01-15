@@ -5,7 +5,7 @@
 		"mac": "2.2074",
 		"android": "2.2074"
 	},
-	"version": "v2.1.0",
+	"version": "v2.1.1",
 	"id": "undefined0.editormusic",
 	"name": "EditorMusic",
 	"developer": "undefined0",
@@ -22,7 +22,7 @@
 			"id": "geode.custom-keybinds",
 			"version": "1.10.1",
 			"importance": "required",
-			"platforms": [ "win" ]
+			"platforms": [ "win", "android" ]
 		}
 	],
 	

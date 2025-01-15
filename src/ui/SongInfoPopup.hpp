@@ -26,7 +26,6 @@ public:
 
     void update(float dt);
     void updateAlbumCover();
-    void updateDebugLabel();
 
     void updateCustomizableUI();
 
