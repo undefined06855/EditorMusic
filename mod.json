@@ -5,7 +5,7 @@
 		"mac": "2.2074",
 		"android": "2.2074"
 	},
-	"version": "v2.0.0",
+	"version": "v2.1.0",
 	"id": "undefined0.editormusic",
 	"name": "EditorMusic",
 	"developer": "undefined0",
@@ -49,11 +49,11 @@
 				"slider-step": 0.01
 			}
 		},
-		"low-pass": {
-			"name": "Enable low-pass filter",
-			"description": "Enable or disable the low-pass filter that makes the sound \"muffled\" when you go deeper into menus.",
-			"type": "bool",
-			"default": true
+		"extra-songs-path": {
+			"name": "Extra songs path",
+			"type": "folder",
+			"description": "If this is set to a path, EditorMusic will take songs from here as well as the config folder.",
+			"default": "(none)"
 		},
 		"player-format": {
 			"name": "Music player layout",
@@ -61,11 +61,21 @@
 			"default": "default",
 			"one-of": [ "default", "centered no album", "centered with album" ]
 		},
-		"extra-songs-path": {
-			"name": "Extra songs path",
-			"type": "folder",
-			"description": "If this is set to a path, EditorMusic will take songs from here as well as the config folder.",
-			"default": "(none)"
+		"round-corners": {
+			"name": "Round corners of album cover",
+			"type": "string",
+			"default": "round",
+			"one-of": [ "none", "round", "round with overlay" ]
+		},
+		"low-pass": {
+			"name": "Enable low-pass filter",
+			"description": "Enable or disable the low-pass filter that makes the sound \"muffled\" when you go deeper into menus.",
+			"type": "bool",
+			"default": true
+		},
+		"dev-title": {
+			"type": "title",
+			"name": "Other Options"
 		},
 		"menulayer-load": {
 			"name": "Menulayer load",
@@ -78,6 +88,10 @@
 			"description": "Enables logging for easier debugging - will make very large log sizes!!!",
 			"type": "bool",
 			"default": false
+		},
+		"reload-songs": {
+			"name": "Reload songs",
+			"type": "custom:reload-song-button"
 		}
 	}
 }

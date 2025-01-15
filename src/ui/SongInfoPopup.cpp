@@ -34,7 +34,7 @@ bool SongInfoPopup::setup() {
         noticeLabel->setID("no-songs-notice-label");
         m_mainLayer->addChildAtPosition(noticeLabel, geode::Anchor::Center, { 0.f, 33.f });
 
-        auto secondaryNoticeLabel = cocos2d::CCLabelBMFont::create("You have no songs in either your config or custom folder! Go to the mod settings to open the config folder to place songs in (or to set a custom folder), then press the reload button, or restart the game.", "bigFont.fnt", 240.f);
+        auto secondaryNoticeLabel = cocos2d::CCLabelBMFont::create("You have no songs in either your config or custom folder! Go to the mod settings to open the config folder to place songs in (or to set a custom folder), then press the reload button, or restart the game.", "bigFont.fnt", 240.f, cocos2d::kCCTextAlignmentCenter);
         secondaryNoticeLabel->setID("no-songs-secondary-notice-label");
         secondaryNoticeLabel->setScale(.3f);
         m_mainLayer->addChildAtPosition(secondaryNoticeLabel, geode::Anchor::Center, { 0.f, -3.f });
@@ -43,13 +43,22 @@ bool SongInfoPopup::setup() {
         reloadButton->setID("no-songs-reload-button");
         m_buttonMenu->addChildAtPosition(reloadButton, geode::Anchor::Bottom, { 0.f, 24.f });
 
+        auto settingsSprite = cocos2d::CCSprite::createWithSpriteFrameName("GJ_optionsBtn_001.png");
+        settingsSprite->setScale(.6f);
+        auto settingsButton = CCMenuItemSpriteExtra::create(settingsSprite, this, menu_selector(SongInfoPopup::onSettings));
+        settingsButton->setID("settings-btn");
+        m_buttonMenu->addChildAtPosition(settingsButton, geode::Anchor::TopRight);
+
         m_closeBtn->removeFromParent();
         m_buttonMenu->addChildAtPosition(m_closeBtn, geode::Anchor::TopLeft);
 
         auto spr = getRandomSpriteForNoSongPopup();
         spr->setID("no-songs-random-sprite");
         spr->setScale(.5f);
+        spr->setAnchorPoint({ 0.f, .5f });
         m_mainLayer->addChildAtPosition(spr, geode::Anchor::Left, { 20.f, 0.f });
+
+        setTitle("Uh oh!");
 
         return true;
     }
@@ -57,7 +66,7 @@ bool SongInfoPopup::setup() {
     if (am.m_isQueueBeingPopulated) {
         m_isInStrippedBackMode = true;
 
-        auto noticeLabel = cocos2d::CCLabelBMFont::create("Songs are being loaded! Come back later once it's finished.", "bigFont.fnt", 300.f);
+        auto noticeLabel = cocos2d::CCLabelBMFont::create("Songs are being loaded! Come back later once it's finished.", "bigFont.fnt", 300.f, cocos2d::kCCTextAlignmentCenter);
         noticeLabel->setScale(.5f);
         noticeLabel->setID("songs-populating-notice-label");
         m_mainLayer->addChildAtPosition(noticeLabel, geode::Anchor::Center, { 0.f, 20.f });
@@ -65,7 +74,9 @@ bool SongInfoPopup::setup() {
         auto silly = cocos2d::CCSprite::create("dialogIcon_018.png");
         silly->setID("songs-populating-silly-image");
         silly->setScale(.6f);
-        m_mainLayer->addChildAtPosition(silly, geode::Anchor::Center, { 33.f, -15.f });
+        m_mainLayer->addChildAtPosition(silly, geode::Anchor::Center, { 0.f, -15.f });
+
+        setTitle("Uh oh!");
 
         return true;
     }
@@ -157,6 +168,7 @@ bool SongInfoPopup::setup() {
     m_currentSongLabel = nullptr;
     m_currentSongArtistLabel = nullptr;
     m_albumCoverSprite = nullptr;
+    m_albumCoverClipSprite = nullptr;
     updateCustomizableUI();
 
     scheduleUpdate();
@@ -221,6 +233,7 @@ void SongInfoPopup::update(float dt) {
 void SongInfoPopup::updateAlbumCover() {
     if (m_isInStrippedBackMode) return;
     if (m_albumCoverSprite) m_albumCoverSprite->removeFromParent();
+    if (m_albumCoverClipSprite) m_albumCoverClipSprite->removeFromParent();
 
     if (m_currentSong->m_albumCover) {
         em::log::debug("Album cover found for {}", m_currentSong->m_name);
@@ -240,7 +253,7 @@ void SongInfoPopup::updateAlbumCover() {
     }
 
     m_albumCoverSprite->setID("album-cover");
-    m_albumCoverSprite->setZOrder(-1);
+    m_albumCoverSprite->setZOrder(-2);
     m_albumCoverSprite->setVisible(em::utils::showMusicPlayerAlbumCover());
 
     if (em::utils::isMusicPlayerCentered()) {
@@ -248,6 +261,23 @@ void SongInfoPopup::updateAlbumCover() {
     } else {
         m_albumCoverSprite->setAnchorPoint({ 0.f, 0.5f });
         m_mainLayer->addChildAtPosition(m_albumCoverSprite, geode::Anchor::Left, { 10.f, 10.f });
+    }
+
+    // idea of the overlay by alphalaneous
+
+    auto clipSetting = geode::Mod::get()->getSettingValue<std::string>("round-corners");
+    em::log::debug("clipSetting: {}", clipSetting);
+    if (clipSetting != "none") {
+        m_albumCoverClipSprite = cocos2d::CCSprite::create(clipSetting == "round" ? "album-round.png"_spr : "album-round-overlay.png"_spr);
+        m_albumCoverClipSprite->setZOrder(-1);
+        if (em::utils::isMusicPlayerCentered()) {
+            m_mainLayer->addChildAtPosition(m_albumCoverClipSprite, geode::Anchor::Center, { 0.f, 3.f });
+        } else {
+            m_albumCoverClipSprite->setAnchorPoint({ 0.f, 0.5f });
+            m_mainLayer->addChildAtPosition(m_albumCoverClipSprite, geode::Anchor::Left, { 10.f, 10.f });
+        }
+
+        m_albumCoverClipSprite->setVisible(em::utils::showMusicPlayerAlbumCover());
     }
 }
 
@@ -265,7 +295,7 @@ cocos2d::CCSprite* SongInfoPopup::getRandomSpriteForNoSongPopup() {
     return cocos2d::CCSprite::create(potentialSpriteNames[rand() % 7].c_str());
 }
 
-void SongInfoPopup::onPlayPause(cocos2d::CCObject* sender) { AudioManager::get().m_isPaused = !AudioManager::get().m_isPaused; }
+void SongInfoPopup::onPlayPause(cocos2d::CCObject* sender) { AudioManager::get().togglePause(); }
 void SongInfoPopup::onPrev(cocos2d::CCObject* sender) { AudioManager::get().prevSong(); }
 void SongInfoPopup::onNext(cocos2d::CCObject* sender) { AudioManager::get().nextSong(); }
 void SongInfoPopup::onRewind(cocos2d::CCObject* sender) { AudioManager::get().rewind(); }
@@ -277,3 +307,5 @@ void SongInfoPopup::onNoSongsRefresh(cocos2d::CCObject* sender) {
     AudioManager::get().populateSongs();
     onClose(sender);
 }
+
+void SongInfoPopup::close() { onClose(nullptr); }

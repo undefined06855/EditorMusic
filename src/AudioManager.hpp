@@ -55,6 +55,7 @@ public:
     void prevSong();
     void rewind();
     void fastForward();
+    void togglePause();
 
     void update(float dt);
     void startPlayingCurrentSong();

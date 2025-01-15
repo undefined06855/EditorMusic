@@ -1,7 +1,13 @@
 # EditorMusic
+## v2.1.0
+- Rearrange order of some settings
+- Fix crash with one song coming from a level (#27)
+- Added ability to round corners of the album cover
+- Added ability to refresh song list from mod settings
+- Saved paused state between sessions
 ## v2.0.0
 - Complete rewrite of the entire mod from the ground up!
-- Redid the song popup
+- Redid and improved UI
 - Added loading album art
 - Improved reliability to reduce crashes
 - Fixed many bugs
@@ -9,6 +15,7 @@
 - Preloads the next 3 and last 3 songs
 - Fixed loading issues (#23)
 - Now runs on a queue and history system, so songs should not be repeated
+- Now supports folders inside the music list
 ## v1.3.11
 - Fixed UI in pause layer
 ## v1.3.10
