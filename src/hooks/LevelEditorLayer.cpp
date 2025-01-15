@@ -1,6 +1,7 @@
-#ifdef GEODE_IS_WINDOWS
 #include "LevelEditorLayer.hpp"
+#ifdef GEODE_IS_WINDOWS
 #include <geode.custom-keybinds/include/Keybinds.hpp>
+#endif
 #include "../AudioManager.hpp"
 #include "../log.hpp"
 
@@ -8,7 +9,8 @@ bool HookedLevelEditorLayer::init(GJGameLevel* p0, bool p1) {
     if (!LevelEditorLayer::init(p0, p1)) return false;
 
     AudioManager::get().enterEditor();
-
+    
+    #ifdef GEODE_IS_WINDOWS
     addEventListener<keybinds::InvokeBindFilter>([](keybinds::InvokeBindEvent* event) {
         if (event->isDown()) {
             em::log::debug("Keybind: Pause");
@@ -35,6 +37,7 @@ bool HookedLevelEditorLayer::init(GJGameLevel* p0, bool p1) {
 
         return geode::ListenerResult::Propagate;
     }, "prev-song"_spr);
+    #endif
 
     return true;
 }
