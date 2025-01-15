@@ -41,4 +41,3 @@ bool HookedLevelEditorLayer::init(GJGameLevel* p0, bool p1) {
 
     return true;
 }
-#endif
