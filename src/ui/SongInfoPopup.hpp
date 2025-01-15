@@ -12,6 +12,7 @@ public:
     cocos2d::CCLabelBMFont* m_currentSongLabel;
     cocos2d::CCLabelBMFont* m_currentSongArtistLabel;
     cocos2d::CCSprite* m_albumCoverSprite;
+    cocos2d::CCSprite* m_albumCoverClipSprite;
 
     ProgressBar* m_progressBar;
     cocos2d::CCLabelBMFont* m_progressLabel;
@@ -39,4 +40,6 @@ public:
     void onNoSongsRefresh(cocos2d::CCObject* sender);
 
     cocos2d::CCSprite* getRandomSpriteForNoSongPopup();
+
+    void close();
 };

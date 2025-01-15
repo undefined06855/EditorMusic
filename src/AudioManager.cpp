@@ -37,7 +37,7 @@ AudioManager::AudioManager()
     , m_easers({})
     
     , m_gen(std::random_device{}())
-    , m_randomSongGenerator(0, 1) {}
+    , m_randomSongGenerator(0, 0) {}
 
 void AudioManager::init() {
     em::log::debug("AudioManager::init()");
@@ -52,7 +52,7 @@ void AudioManager::populateSongs() {
     m_songs.clear();
     m_history.clear();
     if (m_channel) m_channel->stop();
-    m_queueLength = 50;
+    if (auto pop = SongInfoPopup::get()) pop->close();
 
     m_preloadUI = PreloadUI::create();
     m_preloadUI->addToSceneAndAnimate();
@@ -76,9 +76,9 @@ void AudioManager::populateSongsThread() {
     });
 
     em::log::info("Finished populating songs!");
-    if (m_songs.size() < m_queueLength) m_queueLength = m_songs.size();
+    m_queueLength = std::min(50ull, m_songs.size());
 
-    if (m_songs.size() > 1) m_randomSongGenerator = std::uniform_int_distribution<int>(0, m_songs.size() - 1);
+    if (m_songs.size() > 0) m_randomSongGenerator = std::uniform_int_distribution<int>(0, m_songs.size() - 1);
 
     if (m_isInEditor) {
         checkQueueLength();
@@ -262,6 +262,7 @@ void AudioManager::populateAlbumCover(std::shared_ptr<AudioSource> source, FMOD_
         description = std::string((const char*)(data + i));
         i += description.length();
     }
+    if (description.length() == 0) i++; // fixes some of my album covers
     void* imageData = data + i + 1;
     bool imageDataIsURL = false;
 
@@ -407,6 +408,11 @@ void AudioManager::fastForward() {
     m_channel->setPosition(pos + 10000, FMOD_TIMEUNIT_MS);
 }
 
+void AudioManager::togglePause() {
+    m_isPaused = !m_isPaused;
+    geode::Mod::get()->setSavedValue<bool>("is-paused", m_isPaused);
+}
+
 
 void AudioManager::update(float dt) {
     // if we're waiting for a song to load, check again
@@ -526,6 +532,8 @@ void AudioManager::updateLowPassFilter() {
 void AudioManager::enterEditor() {
     m_isInEditor = true;
     if (m_songs.empty()) return;
+
+    m_isPaused = geode::Mod::get()->getSavedValue<bool>("is-paused", false);
 
     checkQueueLength();
     startPlayingCurrentSong();

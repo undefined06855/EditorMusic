@@ -1,5 +1,6 @@
 #include "AudioManager.hpp"
 #include "ui/SongInfoPopup.hpp"
+#include "settings/ReloadSongSetting.hpp"
 
 $on_mod(Loaded) {
     if (!geode::Mod::get()->getSettingValue<bool>("menulayer-load")) AudioManager::get().init();
@@ -15,6 +16,17 @@ $on_mod(Loaded) {
         auto popup = SongInfoPopup::get();
         if (popup) popup->updateCustomizableUI();
     });
+
+    geode::listenForSettingChanges("round-corners", [](std::string value) {
+        auto popup = SongInfoPopup::get();
+        if (popup) popup->updateCustomizableUI();
+    });
+
+    geode::listenForSettingChanges("extra-songs-path", [](std::filesystem::path value) {
+        AudioManager::get().populateSongs();
+    });
+
+    (void)geode::Mod::get()->registerCustomSettingType("reload-song-button", &ReloadSongSetting::parse);
 }
 
 
