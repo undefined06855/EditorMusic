@@ -1,5 +1,6 @@
 #include "SongInfoPopup.hpp"
 #include <Geode/ui/GeodeUI.hpp>
+#include <Geode/ui/LoadingSpinner.hpp>
 #include "../AudioManager.hpp"
 #include "../utils.hpp"
 #include "../log.hpp"
@@ -135,7 +136,7 @@ bool SongInfoPopup::setup() {
     settingsButton->setID("settings-btn");
     m_buttonMenu->addChildAtPosition(settingsButton, geode::Anchor::TopRight);
 
-    m_loadingCircle = geode::LoadingSpinner::create(1.f);
+    m_loadingCircle = geode::LoadingSpinner::create(40.f);
     m_loadingCircle->setID("loading-circle");
     m_mainLayer->addChildAtPosition(m_loadingCircle, geode::Anchor::Center);
 
