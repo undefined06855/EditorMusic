@@ -1,7 +1,6 @@
 #pragma once
-#include <Geode/Geode.hpp>
 
-;class AudioSource {
+class AudioSource {
 public:
     AudioSource(std::filesystem::path path);
     ~AudioSource();

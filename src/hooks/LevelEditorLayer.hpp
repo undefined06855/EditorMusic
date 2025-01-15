@@ -1,4 +1,3 @@
-#include <Geode/Geode.hpp>
 #include <Geode/modify/LevelEditorLayer.hpp>
 
 class $modify(HookedLevelEditorLayer, LevelEditorLayer) {

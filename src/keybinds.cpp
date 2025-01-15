@@ -1,3 +1,4 @@
+#ifdef GEODE_IS_WINDOWS
 #include <geode.custom-keybinds/include/Keybinds.hpp>
 #include "AudioManager.hpp"
 #include "log.hpp"
@@ -30,3 +31,4 @@ $on_mod(Loaded) {
         false
 	});
 }
+#endif

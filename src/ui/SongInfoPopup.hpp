@@ -1,7 +1,7 @@
 #pragma once
-#include <Geode/Geode.hpp>
 #include "../AudioSource.hpp"
 #include "ProgressBar.hpp"
+#include <Geode/ui/LoadingSpinner.hpp>
 
 class SongInfoPopup : public geode::Popup<> {
 public:
@@ -18,7 +18,7 @@ public:
     cocos2d::CCLabelBMFont* m_progressLabel;
 
     std::shared_ptr<AudioSource> m_currentSong;
-    LoadingCircleSprite* m_loadingCircle;
+    geode::LoadingSpinner* m_loadingCircle;
 
     cocos2d::CCMenu* m_layoutedButtonMenu;
 
