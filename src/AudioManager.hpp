@@ -17,7 +17,7 @@ public:
     std::vector<std::shared_ptr<AudioSource>> m_songs;
 
     FMOD::Channel* m_channel;
-	FMOD::System* m_system;
+    FMOD::System* m_system;
     float m_volume;
 
     bool m_isPaused;
@@ -28,7 +28,7 @@ public:
     bool m_playCurrentSongQueuedForLoad;
 
     int m_lowPassStrength;
-	FMOD::DSP* m_lowPassFilter;
+    FMOD::DSP* m_lowPassFilter;
     float m_lowPassEasedCutoff;
 
     std::vector<Easer> m_easers;
