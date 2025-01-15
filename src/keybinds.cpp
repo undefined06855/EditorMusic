@@ -1,3 +1,4 @@
+#ifndef GEODE_IS_MACOS
 #include <geode.custom-keybinds/include/Keybinds.hpp>
 #include "AudioManager.hpp"
 #include "log.hpp"
@@ -30,3 +31,4 @@ $on_mod(Loaded) {
         false
 	});
 }
+#endif

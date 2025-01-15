@@ -1,5 +1,4 @@
 #pragma once
-#include <Geode/Geode.hpp>
 #include "../AudioSource.hpp"
 #include "ProgressBar.hpp"
 

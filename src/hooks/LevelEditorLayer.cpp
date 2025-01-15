@@ -1,3 +1,4 @@
+#ifndef GEODE_IS_MACOS
 #include "LevelEditorLayer.hpp"
 #include <geode.custom-keybinds/include/Keybinds.hpp>
 #include "../AudioManager.hpp"
@@ -37,3 +38,4 @@ bool HookedLevelEditorLayer::init(GJGameLevel* p0, bool p1) {
 
     return true;
 }
+#endif

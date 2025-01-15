@@ -1,5 +1,4 @@
 #pragma once
-#include <Geode/Geode.hpp>
 #include "ProgressBar.hpp"
 
 class PreloadUI : public cocos2d::CCNodeRGBA {

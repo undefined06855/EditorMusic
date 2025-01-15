@@ -1,5 +1,4 @@
 #pragma once
-#include <Geode/Geode.hpp>
 #include <Geode/modify/EditorPauseLayer.hpp>
 
 class $modify(HookedEditorPauseLayer, EditorPauseLayer) {
