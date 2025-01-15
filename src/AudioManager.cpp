@@ -76,7 +76,9 @@ void AudioManager::populateSongsThread() {
     });
 
     em::log::info("Finished populating songs!");
-    m_queueLength = std::min(50ull, m_songs.size());
+
+    if (m_songs.size() < 50) m_queueLength = m_songs.size();
+    else m_queueLength = 50;
 
     if (m_songs.size() > 0) m_randomSongGenerator = std::uniform_int_distribution<int>(0, m_songs.size() - 1);
 
