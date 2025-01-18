@@ -549,6 +549,7 @@ void AudioManager::enterEditor() {
     m_isPaused = geode::Mod::get()->getSavedValue<bool>("is-paused", false);
 
     checkQueueLength();
+    checkSongPreload();
     startPlayingCurrentSong();
 }
 

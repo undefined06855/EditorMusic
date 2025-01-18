@@ -74,7 +74,7 @@ bool SongInfoPopup::setup() {
         auto silly = cocos2d::CCSprite::create("dialogIcon_018.png");
         silly->setID("songs-populating-silly-image");
         silly->setScale(.6f);
-        m_mainLayer->addChildAtPosition(silly, geode::Anchor::Center, { 0.f, -15.f });
+        m_mainLayer->addChildAtPosition(silly, geode::Anchor::Center, { 0.f, -30.f });
 
         setTitle("Uh oh!");
 

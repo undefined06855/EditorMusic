@@ -10,7 +10,7 @@ bool HookedLevelEditorLayer::init(GJGameLevel* p0, bool p1) {
 
     AudioManager::get().enterEditor();
     
-    #ifdef GEODE_IS_WINDOWS
+#ifndef GEODE_IS_MACOS
     addEventListener<keybinds::InvokeBindFilter>([](keybinds::InvokeBindEvent* event) {
         if (event->isDown()) {
             em::log::debug("Keybind: Pause");
@@ -37,7 +37,7 @@ bool HookedLevelEditorLayer::init(GJGameLevel* p0, bool p1) {
 
         return geode::ListenerResult::Propagate;
     }, "prev-song"_spr);
-    #endif
+#endif
 
     return true;
 }
