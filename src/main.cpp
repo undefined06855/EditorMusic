@@ -2,6 +2,7 @@
 #include "ui/SongInfoPopup.hpp"
 #include "settings/ReloadSongSetting.hpp"
 #include "eclipse.hpp"
+#include "log.hpp"
 
 $on_mod(Loaded) {
     if (!geode::Mod::get()->getSettingValue<bool>("menulayer-load")) AudioManager::get().init();
