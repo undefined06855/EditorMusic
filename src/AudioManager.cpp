@@ -443,7 +443,7 @@ void AudioManager::update(float dt) {
         int lowPassStrength = cocos2d::CCScene::get()->getChildrenCount() - persistedNodes - 1;
         if (LevelEditorLayer::get()->getChildByID("EditorPauseLayer")) lowPassStrength++;
         if (cocos2d::CCScene::get()->getChildByID("thesillydoggo.qolmod/QOLModButton")) lowPassStrength--;
-        if (cocos2d::CCScene::get()->getChildByType<SongInfoPopup>(0)) lowPassStrength = 0;
+        if (SongInfoPopup::get()) lowPassStrength = 0;
 
         if (lowPassStrength != m_lowPassStrength && geode::Mod::get()->getSettingValue<bool>("low-pass")) {
             m_lowPassStrength = lowPassStrength;

@@ -8,7 +8,12 @@
 bool HookedLevelEditorLayer::init(GJGameLevel* p0, bool p1) {
     if (!LevelEditorLayer::init(p0, p1)) return false;
 
-    AudioManager::get().enterEditor();
+    // smh
+    bool isLikelyObjectWorkshop = \
+           geode::Loader::get()->getLoadedMod("firee.object-workshop")
+        && cocos2d::CCScene::get()->getChildByType<ProfilePage>(0);
+
+    if (!isLikelyObjectWorkshop) AudioManager::get().enterEditor();
     
 #ifndef GEODE_IS_MACOS
     addEventListener<keybinds::InvokeBindFilter>([](keybinds::InvokeBindEvent* event) {

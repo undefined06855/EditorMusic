@@ -3,6 +3,7 @@
 - Fixed keybinds in editor not working on android
 - Fixed issues with positioning in the song popup when you have zero songs
 - Fixed issues with songs not preloading if you've just entered the editor
+- Improved compatibility with Object Workshop
 ## v2.1.2
 - Rift label support to allow you to use EditorMusic info in Eclipse Discord Rich Presence!
 ## v2.1.1
