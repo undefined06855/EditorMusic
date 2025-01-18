@@ -1,5 +1,5 @@
 #include "LevelEditorLayer.hpp"
-#ifdef GEODE_IS_WINDOWS
+#ifndef GEODE_IS_MACOS
 #include <geode.custom-keybinds/include/Keybinds.hpp>
 #endif
 #include "../AudioManager.hpp"
