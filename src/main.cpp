@@ -30,7 +30,7 @@ $on_mod(Loaded) {
     (void)geode::Mod::get()->registerCustomSettingType("reload-song-button", &ReloadSongSetting::parse);
 
     em::rift_labels::g_isEclipseLoaded = geode::Loader::get()->isModLoaded("eclipse.eclipse-menu");
-    if (em::rift_labels::g_isEclipseLoaded) geode::log::debug("hi eclipse nice to meet you i have some variables for you");
+    if (em::rift_labels::g_isEclipseLoaded) em::log::debug("hi eclipse nice to meet you i have some variables for you");
 }
 
 
