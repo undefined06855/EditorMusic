@@ -1,4 +1,8 @@
 # EditorMusic
+## v2.1.5
+- Add physical media button support
+- Fixed issues with Quick Volume Controls
+- Made music stop instantly when the game is closed
 ## v2.1.4
 - Added currently playing song notification
 - Fixed issues with non-square album covers and rounding

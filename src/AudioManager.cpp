@@ -414,10 +414,14 @@ void AudioManager::fastForward() {
 }
 
 void AudioManager::togglePause() {
-    m_isPaused = !m_isPaused;
-    geode::Mod::get()->setSavedValue<bool>("is-paused", m_isPaused);
+    setPaused(!m_isPaused);
 }
 
+void AudioManager::setPaused(bool value) {
+    if (!shouldAllowAudioFunctions()) return;
+    m_isPaused = value;
+    geode::Mod::get()->setSavedValue<bool>("is-paused", m_isPaused);
+}
 
 void AudioManager::update(float dt) {
     // if we're waiting for a song to load, check again
@@ -443,6 +447,7 @@ void AudioManager::update(float dt) {
         int lowPassStrength = cocos2d::CCScene::get()->getChildrenCount() - persistedNodes - 1;
         if (LevelEditorLayer::get()->getChildByID("EditorPauseLayer")) lowPassStrength++;
         if (cocos2d::CCScene::get()->getChildByID("thesillydoggo.qolmod/QOLModButton")) lowPassStrength--;
+        if (cocos2d::CCScene::get()->getChildByID("hjfod.quick-volume-controls/overlay")) lowPassStrength--;
         if (SongInfoPopup::get()) lowPassStrength = 0;
 
         if (lowPassStrength != m_lowPassStrength && geode::Mod::get()->getSettingValue<bool>("low-pass")) {
@@ -588,4 +593,9 @@ void AudioManager::checkSongPreload() {
             song->loadAudioThreaded();
         }
     }
+}
+
+void AudioManager::onCloseGDWindow() {
+    em::log::debug("GD window closed, stop music");
+    exitEditor(); // just this for now, might add more later
 }

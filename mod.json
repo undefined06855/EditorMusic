@@ -5,7 +5,7 @@
 		"mac": "2.2074",
 		"android": "2.2074"
 	},
-	"version": "v2.1.4",
+	"version": "v2.1.5",
 	"id": "undefined0.editormusic",
 	"name": "EditorMusic",
 	"developer": "undefined0",
@@ -67,6 +67,13 @@
 			"description": "Shows a little notification with the title of the song in the editor whenever the song changes.",
 			"type": "bool",
 			"default": true
+		},
+		"media-controls": {
+			"name": "Windows media control support",
+			"description": "(Windows only) Enables the mod to listen to media controls to control play",
+			"type": "bool",
+			"default": true,
+			"platforms": [ "win" ]
 		},
 		"extra-songs-path": {
 			"name": "Extra songs path",

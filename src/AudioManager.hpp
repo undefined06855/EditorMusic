@@ -56,6 +56,7 @@ public:
     void rewind();
     void fastForward();
     void togglePause();
+    void setPaused(bool value);
 
     void update(float dt);
     void startPlayingCurrentSong();
@@ -73,4 +74,6 @@ public:
 
     void enterEditor();
     void exitEditor();
+
+    void onCloseGDWindow();
 };
