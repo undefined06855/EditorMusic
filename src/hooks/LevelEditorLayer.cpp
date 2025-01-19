@@ -74,7 +74,9 @@ void HookedLevelEditorLayer::updateEditor(float dt) {
     // song just changed, set label + run anim
     fields->m_songPopupLabel->setString(fmt::format("Now Playing: {}", currentSong->getCombinedSongName()).c_str());
 
-    if (fields->m_songPopupLabel->numberOfRunningActions() > 0) return;
+    // using this isntead of numberOfRunningActions because it;s either inlined or
+    // not found for imac and i cant be bothered to wait
+    if (fields->m_songPopupLabel->m_pActionManager->numberOfRunningActionsInTarget(fields->m_songPopupLabel) > 0) return;
     fields->m_songPopupLabel->runAction(
         cocos2d::CCSequence::create(
             cocos2d::CCSpawn::createWithTwoActions(
