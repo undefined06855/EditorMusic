@@ -4,6 +4,9 @@
 #include "../utils.hpp"
 #include "../log.hpp"
 
+// TODO: play/pause button can get desynced if you use a keybind to pause while
+// the popup is open
+
 SongInfoPopup* SongInfoPopup::create() {
     auto ret = new SongInfoPopup;
     if (ret->initAnchored(360.f, 140.f)) {
