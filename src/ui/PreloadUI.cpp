@@ -63,7 +63,7 @@ void PreloadUI::addToSceneAndAnimate() {
     setPosition(m_animUpperPos);
     runAction(
         cocos2d::CCSpawn::createWithTwoActions(
-            cocos2d::CCFadeIn::create(1.f),
+            cocos2d::CCFadeIn::create(.5f),
             cocos2d::CCEaseExponentialOut::create(cocos2d::CCMoveTo::create(.5f, m_animLowerPos))
         )
     );
@@ -95,20 +95,16 @@ void PreloadUI::runCompleteAnimationAndRemove() {
         return;
     }
 
-    // createWithTwoActions used for macos support
     runAction(
-        cocos2d::CCSequence::createWithTwoActions(
+        cocos2d::CCSequence::create(
             cocos2d::CCDelayTime::create(1.f),
-            cocos2d::CCSequence::createWithTwoActions(
-                cocos2d::CCSpawn::createWithTwoActions(
-                    cocos2d::CCFadeOut::create(1.f),
-                    cocos2d::CCEaseExponentialIn::create(cocos2d::CCMoveTo::create(.5f, m_animUpperPos))
-                ),
-                cocos2d::CCSequence::createWithTwoActions(
-                    cocos2d::CCDelayTime::create(1.f),
-                    cocos2d::CCRemoveSelf::create()
-                )
-            )
+            cocos2d::CCSpawn::createWithTwoActions(
+                cocos2d::CCFadeOut::create(.5f),
+                cocos2d::CCEaseExponentialIn::create(cocos2d::CCMoveTo::create(.5f, m_animUpperPos))
+            ),
+            cocos2d::CCDelayTime::create(.5f),
+            cocos2d::CCRemoveSelf::create(),
+            NULL
         )
     );
 }

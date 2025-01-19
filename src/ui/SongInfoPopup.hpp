@@ -12,7 +12,7 @@ public:
     cocos2d::CCLabelBMFont* m_currentSongLabel;
     cocos2d::CCLabelBMFont* m_currentSongArtistLabel;
     cocos2d::CCSprite* m_albumCoverSprite;
-    cocos2d::CCSprite* m_albumCoverClipSprite;
+    cocos2d::extension::CCScale9Sprite* m_albumCoverClipSprite;
 
     ProgressBar* m_progressBar;
     cocos2d::CCLabelBMFont* m_progressLabel;

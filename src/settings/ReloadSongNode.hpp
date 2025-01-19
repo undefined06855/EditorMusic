@@ -1,5 +1,5 @@
 #pragma once
-#include <Geode/Geode.hpp>
+#include <Geode/loader/SettingV3.hpp>
 
 class ReloadSongSetting;
 

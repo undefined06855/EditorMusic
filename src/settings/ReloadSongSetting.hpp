@@ -1,5 +1,4 @@
 #pragma once
-#include <Geode/Geode.hpp>
 #include "ReloadSongNode.hpp"
 
 class ReloadSongSetting : public geode::SettingV3 {

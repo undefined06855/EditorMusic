@@ -197,6 +197,7 @@ void SongInfoPopup::updateCustomizableUI() {
         m_mainLayer->addChildAtPosition(m_currentSongArtistLabel, geode::Anchor::Left, { 84.f, -17.25f });
     }
 
+    // update strings in m_currentSongLabel + artistLabel
     m_currentSong = nullptr;
     update(0.f);
 }
@@ -268,8 +269,9 @@ void SongInfoPopup::updateAlbumCover() {
     auto clipSetting = geode::Mod::get()->getSettingValue<std::string>("round-corners");
     em::log::debug("clipSetting: {}", clipSetting);
     if (clipSetting != "none") {
-        m_albumCoverClipSprite = cocos2d::CCSprite::create(clipSetting == "round" ? "album-round.png"_spr : "album-round-overlay.png"_spr);
+        m_albumCoverClipSprite = cocos2d::extension::CCScale9Sprite::create(clipSetting == "round" ? "album-round.png"_spr : "album-round-overlay.png"_spr);
         m_albumCoverClipSprite->setZOrder(-1);
+        m_albumCoverClipSprite->setContentSize(m_albumCoverSprite->getScaledContentSize());
         if (em::utils::isMusicPlayerCentered()) {
             m_mainLayer->addChildAtPosition(m_albumCoverClipSprite, geode::Anchor::Center, { 0.f, 3.f });
         } else {

@@ -26,3 +26,11 @@ void AudioSource::loadAudio() {
     m_hasLoadedAudio = true;
     m_isLoadingAudio = false;
 }
+
+std::string AudioSource::getCombinedSongName() {
+    if (m_artist != "Unknown") {
+        return fmt::format("{} - {}", m_name, m_artist);
+    }
+
+    return m_name;
+}

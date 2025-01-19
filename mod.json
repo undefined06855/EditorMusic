@@ -44,12 +44,6 @@
 				"slider-step": 0.01
 			}
 		},
-		"extra-songs-path": {
-			"name": "Extra songs path",
-			"type": "folder",
-			"description": "If this is set to a path, EditorMusic will take songs from here as well as the config folder.",
-			"default": "(none)"
-		},
 		"player-format": {
 			"name": "Music player layout",
 			"type": "string",
@@ -67,6 +61,18 @@
 			"description": "Enable or disable the low-pass filter that makes the sound \"muffled\" when you go deeper into menus.",
 			"type": "bool",
 			"default": true
+		},
+		"next-song-notif": {
+			"name": "Next Song notification",
+			"description": "Shows a little notification with the title of the song in the editor whenever the song changes.",
+			"type": "bool",
+			"default": true
+		},
+		"extra-songs-path": {
+			"name": "Extra songs path",
+			"type": "folder",
+			"description": "If this is set to a path, EditorMusic will take songs from here as well as the config folder.",
+			"default": "(none)"
 		},
 		"dev-title": {
 			"type": "title",

@@ -18,4 +18,6 @@ public:
 
     void loadAudioThreaded();
     void loadAudio();
+
+    std::string getCombinedSongName();
 };
