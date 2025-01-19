@@ -1,4 +1,7 @@
 # EditorMusic
+## v2.1.4
+- Added currently playing song notification
+- Fixed issues with non-square album covers and rounding
 ## v2.1.3
 - Fixed keybinds in editor not working on android
 - Fixed issues with positioning in the song popup when you have zero songs
