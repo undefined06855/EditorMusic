@@ -1,4 +1,6 @@
 # EditorMusic
+## v2.1.6
+- Fixed issues with zero songs
 ## v2.1.5
 - Add physical media button support
 - Fixed issues with Quick Volume Controls

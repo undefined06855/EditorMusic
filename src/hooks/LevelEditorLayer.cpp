@@ -64,6 +64,8 @@ bool HookedLevelEditorLayer::init(GJGameLevel* p0, bool p1) {
 void HookedLevelEditorLayer::updateEditor(float dt) {
     LevelEditorLayer::updateEditor(dt);
 
+    if (!AudioManager::get().shouldAllowAudioFunctions()) return;
+
     auto currentSong = AudioManager::get().getCurrentSong();
     auto fields = m_fields.self();
     if (currentSong == fields->m_currentSong) return;
