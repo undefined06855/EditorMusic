@@ -1,4 +1,6 @@
 # EditorMusic
+## v2.1.7
+- Added Custom Keybinds support for MacOS
 ## v2.1.6
 - Fixed issues with zero songs
 ## v2.1.5
