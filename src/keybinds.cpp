@@ -1,5 +1,4 @@
 #include <geode.custom-keybinds/include/Keybinds.hpp>
-#include "AudioManager.hpp"
 
 $on_mod(Loaded) {
 	keybinds::BindManager::get()->registerBindable({
