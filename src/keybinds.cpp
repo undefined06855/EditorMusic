@@ -1,6 +1,5 @@
 #include <geode.custom-keybinds/include/Keybinds.hpp>
 #include "AudioManager.hpp"
-#include "log.hpp"
 
 $on_mod(Loaded) {
 	keybinds::BindManager::get()->registerBindable({
@@ -9,7 +8,7 @@ $on_mod(Loaded) {
 		"",
 		{ keybinds::Keybind::create(cocos2d::KEY_P, keybinds::Modifier::Control) },
 		keybinds::Category::EDITOR,
-        false
+		false
 	});
 
 	keybinds::BindManager::get()->registerBindable({
@@ -18,7 +17,7 @@ $on_mod(Loaded) {
 		"",
 		{ keybinds::Keybind::create(cocos2d::KEY_Right, keybinds::Modifier::Control) },
 		keybinds::Category::EDITOR,
-        false
+		false
 	});
 
 	keybinds::BindManager::get()->registerBindable({
@@ -27,6 +26,6 @@ $on_mod(Loaded) {
 		"",
 		{ keybinds::Keybind::create(cocos2d::KEY_Left, keybinds::Modifier::Control) },
 		keybinds::Category::EDITOR,
-        false
+		false
 	});
 }
