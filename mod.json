@@ -5,7 +5,7 @@
 		"mac": "2.2074",
 		"android": "2.2074"
 	},
-	"version": "v2.1.7",
+	"version": "v2.1.8",
 	"id": "undefined0.editormusic",
 	"name": "EditorMusic",
 	"developer": "undefined0",
@@ -66,7 +66,7 @@
 		},
 		"media-controls": {
 			"name": "Windows media control support",
-			"description": "(Windows only) Enables the mod to listen to media controls to control play",
+			"description": "(Windows only) Enables the mod to listen to media controls to control playing, pausing, next song and previous song.",
 			"type": "bool",
 			"default": true,
 			"platforms": [ "win" ]
@@ -89,7 +89,7 @@
 		},
 		"enable-log": {
 			"name": "Enable logging",
-			"description": "Enables logging for easier debugging - will make very large log sizes!!!",
+			"description": "Enables logging for easier debugging - will make very large logs, only enable if you need to!",
 			"type": "bool",
 			"default": false
 		},

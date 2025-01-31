@@ -1,4 +1,6 @@
 # EditorMusic
+## v2.1.8
+- Fixed issues with Creation Rotation and other mods
 ## v2.1.7
 - Added Custom Keybinds support for MacOS
 ## v2.1.6

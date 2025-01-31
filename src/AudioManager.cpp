@@ -427,6 +427,11 @@ void AudioManager::update(float dt) {
     // if we're waiting for a song to load, check again
     if (m_playCurrentSongQueuedForLoad) startPlayingCurrentSong();
 
+    if (m_isInEditor && !LevelEditorLayer::get()) {
+        em::log::warn("potential m_isInEditor desync! setting m_isInEditor to false...");
+        m_isInEditor = false;
+    }
+
     // update easings
     std::vector<Easer*> easersToRemove = {};
     for (auto& easer : m_easers) {
