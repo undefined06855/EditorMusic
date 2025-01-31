@@ -428,8 +428,9 @@ void AudioManager::update(float dt) {
     if (m_playCurrentSongQueuedForLoad) startPlayingCurrentSong();
 
     if (m_isInEditor && !LevelEditorLayer::get()) {
-        em::log::warn("potential m_isInEditor desync! setting m_isInEditor to false...");
-        m_isInEditor = false;
+        em::log::warn("potential m_isInEditor desync! prematurely running exitEditor...");
+        exitEditor();
+        return;
     }
 
     // update easings
