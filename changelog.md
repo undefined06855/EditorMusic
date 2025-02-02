@@ -1,4 +1,6 @@
 # EditorMusic
+## v2.1.10
+- New logo!
 ## v2.1.9
 - Fixed a memory leak when reloading songs
 ## v2.1.8
