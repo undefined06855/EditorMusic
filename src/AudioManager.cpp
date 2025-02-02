@@ -48,6 +48,8 @@ void AudioManager::init() {
 }
 
 void AudioManager::populateSongs() {
+    if (m_isQueueBeingPopulated) return;
+
     m_isQueueBeingPopulated = true;
     m_queue.clear();
     m_songs.clear();
@@ -316,8 +318,11 @@ void AudioManager::populateAlbumCover(std::shared_ptr<AudioSource> source, FMOD_
         if (!texture->initWithImage(image)) {
             em::log::warn("Error creating CCTexture2D from CCImage for album cover of {}!", source->m_name);
             delete texture;
+            image->release();
             return;
         }
+
+        image->release();
 
         em::log::debug("Album cover cctexture loaded for {}!", source->m_name);
         source->m_albumCover = texture;

@@ -1,4 +1,6 @@
 # EditorMusic
+## v2.1.9
+- Fixed a memory leak when reloading songs
 ## v2.1.8
 - Fixed issues with Creation Rotation and other mods
 ## v2.1.7
