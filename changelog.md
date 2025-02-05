@@ -1,4 +1,6 @@
 # EditorMusic
+## v2.1.11
+- Fixed issues that caused songs to start playing if it's meant to be paused on levels that take a long time to load
 ## v2.1.10
 - New logo!
 ## v2.1.9
