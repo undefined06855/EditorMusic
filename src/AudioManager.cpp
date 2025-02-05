@@ -495,7 +495,7 @@ void AudioManager::startPlayingCurrentSong() {
 
     // now has loaded audio at this point
     m_playCurrentSongQueuedForLoad = false;
-    auto ret = m_system->playSound(getCurrentSong()->m_sound, nullptr, false, &m_channel); 
+    auto ret = m_system->playSound(getCurrentSong()->m_sound, nullptr, m_isPaused, &m_channel); 
     updateLowPassFilter();
     if (ret != FMOD_OK) em::log::warn("FMOD error: {} (0x{:02X})", FMOD_ErrorString(ret), (int)ret);
     em::log::debug("Music time!");
