@@ -44,7 +44,7 @@ void AudioManager::init() {
     em::log::debug("AudioManager::init()");
     populateSongs();
     m_system->createDSPByType(FMOD_DSP_TYPE_LOWPASS, &m_lowPassFilter);
-	m_lowPassFilter->setParameterFloat(FMOD_DSP_LOWPASS_RESONANCE, 0.f);
+    m_lowPassFilter->setParameterFloat(FMOD_DSP_LOWPASS_RESONANCE, 0.f);
 }
 
 void AudioManager::populateSongs() {
