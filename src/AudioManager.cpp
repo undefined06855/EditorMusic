@@ -123,7 +123,7 @@ void AudioManager::populateSongsFromPath(std::filesystem::path path) {
         geode::Loader::get()->queueInMainThread([this, source]{
             m_preloadUI->increment(source->m_name);
         });
-	}
+    }
 }
 
 bool AudioManager::isValidAudioFile(std::filesystem::path path) {
@@ -141,7 +141,7 @@ void AudioManager::populateAudioSourceInfo(std::shared_ptr<AudioSource> source) 
     // FMOD_OPENONLY loads it but does not allocate memory for the actual sound data
     // so is great for just reading the metadata
     FMOD::Sound* sound;
-	m_system->createSound(source->m_path.string().c_str(), FMOD_OPENONLY, nullptr, &sound);
+    m_system->createSound(source->m_path.string().c_str(), FMOD_OPENONLY, nullptr, &sound);
 
     // figure out metadata for name and if it exists
     std::map<std::string, std::string> nameExtensionMap = {
