@@ -2,7 +2,6 @@
 #include "ui/SongInfoPopup.hpp"
 #include <Geode/fmod/fmod_errors.h>
 #include <regex>
-#include <locale>
 #include "simdutf.h"
 #include "utils.hpp"
 #include "log.hpp"
@@ -41,8 +40,6 @@ AudioManager::AudioManager()
     , m_randomSongGenerator(0, 0) {}
 
 void AudioManager::init() {
-    em::log::debug("AudioManager::init()");
-    populateSongs();
     m_system->createDSPByType(FMOD_DSP_TYPE_LOWPASS, &m_lowPassFilter);
     m_lowPassFilter->setParameterFloat(FMOD_DSP_LOWPASS_RESONANCE, 0.f);
 }
@@ -73,7 +70,7 @@ void AudioManager::populateSongsThread() {
     populateSongsFromPath(geode::Mod::get()->getSettingValue<std::filesystem::path>("extra-songs-path"));
     geode::log::popNest();
 
-    geode::Loader::get()->queueInMainThread([this]{
+    geode::Loader::get()->queueInMainThread([this] {
         m_preloadUI->runCompleteAnimationAndRemove();
         m_preloadUI = nullptr;
     });
@@ -120,7 +117,7 @@ void AudioManager::populateSongsFromPath(std::filesystem::path path) {
         auto source = std::make_shared<AudioSource>(file.path());
         populateAudioSourceInfo(source);
         m_songs.push_back(source);
-        geode::Loader::get()->queueInMainThread([this, source]{
+        geode::Loader::get()->queueInMainThread([this, source] {
             m_preloadUI->increment(source->m_name);
         });
     }
@@ -190,8 +187,8 @@ std::string AudioManager::populateStringTag(FMOD_TAG tag, bool useTitleFallback,
     // simdutf::autodetect_encoding does exist but there's no point using it
     // because it crashes for me trying to read the BOM or whatever and also
     // since the type is embedded into the tag data anyway as long as
-    // whatever's writing the tag doesnt lie about the data type then it
-    // should be fine
+    // whatever's writing the tag doesnt lie about the data type then it should
+    // be fine
 
     // in the utf16 checks it looks like adding one seems to remove the
     // entire bom even though it's two bytes long? or at least it should be
@@ -313,7 +310,7 @@ void AudioManager::populateAlbumCover(std::shared_ptr<AudioSource> source, FMOD_
     }
 
     em::log::debug("CCImage created, queue cctexture in main thread...");
-    geode::Loader::get()->queueInMainThread([source, image]{
+    geode::Loader::get()->queueInMainThread([source, image] {
         auto texture = new cocos2d::CCTexture2D;
         if (!texture->initWithImage(image)) {
             em::log::warn("Error creating CCTexture2D from CCImage for album cover of {}!", source->m_name);
@@ -433,6 +430,7 @@ void AudioManager::update(float dt) {
     if (m_playCurrentSongQueuedForLoad) startPlayingCurrentSong();
 
     if (m_isInEditor && !LevelEditorLayer::get()) {
+        // probably object toolbox smh
         em::log::warn("potential m_isInEditor desync! prematurely running exitEditor...");
         exitEditor();
         return;
@@ -608,5 +606,14 @@ void AudioManager::checkSongPreload() {
 
 void AudioManager::onCloseGDWindow() {
     em::log::debug("GD window closed, stop music");
-    exitEditor(); // just this for now, might add more later
+    exitEditor();
+    // will cause all songs to be deleted and their album covers (caused an
+    // opengl memory leak before)
+    // not like it really matters though because the game is about to close
+    // also like a half dozen or so textures still dont get freed and I dont
+    // know why but whatever I guess i dont even need to do this
+    m_songs.clear();
+
+    // there's a chance an extra frame gets rendered and SongInfoPopup crashes
+    if (auto pop = SongInfoPopup::get()) pop->close();
 }

@@ -5,8 +5,6 @@
 #include "log.hpp"
 
 $on_mod(Loaded) {
-    if (!geode::Mod::get()->getSettingValue<bool>("menulayer-load")) AudioManager::get().init();
-
     geode::listenForSettingChanges("low-pass", [](bool value) {
         auto am = AudioManager::get();
 

@@ -5,12 +5,15 @@
 		"mac": "2.2074",
 		"android": "2.2074"
 	},
-	"version": "v2.1.11",
+
+	"version": "v2.1.12",
 	"id": "undefined0.editormusic",
 	"name": "EditorMusic",
 	"developer": "undefined0",
 	"description": "Music in your editor, what's not to like?",
 	"tags": [ "editor", "music", "enhancement" ],
+	
+	"early-load": true,
 
 	"dependencies": {
 		"geode.node-ids": "1.19.0",
@@ -80,12 +83,6 @@
 		"dev-title": {
 			"type": "title",
 			"name": "Other Options"
-		},
-		"menulayer-load": {
-			"name": "Menulayer load",
-			"description": "Makes song loading start when you enter the main menu, instead of when the mod loads.",
-			"type": "bool",
-			"default": false
 		},
 		"enable-log": {
 			"name": "Enable logging",

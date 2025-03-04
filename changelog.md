@@ -1,4 +1,9 @@
 # EditorMusic
+## v2.1.12
+- Fixed issues with changing between fullscreen and windowed
+- Fixed other crash issues when closing the game with the song popup open
+- Mod preview images!
+- Contemplating bumping a version number other than patch...
 ## v2.1.11
 - Fixed issues that caused songs to start playing if it's meant to be paused on levels that take a long time to load
 ## v2.1.10
