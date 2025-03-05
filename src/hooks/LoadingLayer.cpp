@@ -8,7 +8,9 @@ bool HookedLoadingLayer::init(bool isReloading) {
     if (!isReloading) {
         // setup low pass filters on first game launch
         AudioManager::get().init();
+#ifdef GEODE_IS_WINDOWS
         em::window::modifyWindowProc();
+#endif
     }
 
     // dont ask
