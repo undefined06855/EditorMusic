@@ -47,6 +47,7 @@ public:
     void populateAlbumCover(std::shared_ptr<AudioSource> source, FMOD_TAG tag);
     std::string figureOutFallbackName(std::filesystem::path path);
     std::string filterNameThruRegex(std::string songName);
+    std::string formatArtistString(std::string artists);
     bool isValidAudioFile(std::filesystem::path path);
 
     void checkQueueLength();

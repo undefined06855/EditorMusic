@@ -1,4 +1,8 @@
 # EditorMusic
+## v2.1.13
+- Format multiple artists correctly
+- Fix hardware buttons not working and music not closing when game is closed
+- Refixed other crash issues when closing the game with the song popup open
 ## v2.1.12
 - Fixed issues with changing between fullscreen and windowed
 - Fixed other crash issues when closing the game with the song popup open
@@ -49,8 +53,7 @@
 - Fixed loading issues (#23)
 - Now runs on a queue and history system, so songs should not be repeated
 - Now supports folders inside the music list
-
-
+---
 ## v1.3.11
 - Fixed UI in pause layer
 ## v1.3.10

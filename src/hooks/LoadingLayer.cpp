@@ -1,5 +1,6 @@
 #include "LoadingLayer.hpp"
 #include "../AudioManager.hpp"
+#include "window.hpp"
 
 bool HookedLoadingLayer::init(bool isReloading) {
     if (!LoadingLayer::init(isReloading)) return false;
@@ -7,6 +8,7 @@ bool HookedLoadingLayer::init(bool isReloading) {
     if (!isReloading) {
         // setup low pass filters on first game launch
         AudioManager::get().init();
+        em::window::modifyWindowProc();
     }
 
     // dont ask

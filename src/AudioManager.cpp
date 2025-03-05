@@ -164,7 +164,10 @@ void AudioManager::populateAudioSourceInfo(std::shared_ptr<AudioSource> source) 
     if (sound->getTag(artistExtensionMap[source->m_path.extension().string()].c_str(), 0, &artistTag) == FMOD_ERR_TAGNOTFOUND) {
         em::log::debug("Using fallback, artist not found");
         source->m_artist = "Unknown";
-    } else source->m_artist = populateStringTag(artistTag, false);
+    } else {
+        auto unformatted = populateStringTag(artistTag, false);
+        source->m_artist = formatArtistString(unformatted);
+    }
 
     // only mp3 covers supported for now
     FMOD_TAG albumCoverTag;
@@ -339,6 +342,30 @@ std::string AudioManager::filterNameThruRegex(std::string songName) {
     // any character from space to ~ and also bullet point (u2022)
     // this matches any character that isnt that and replaces it with a question mark
     return std::regex_replace(songName, std::regex("[^ -~•]+"), "?");
+}
+
+std::string AudioManager::formatArtistString(std::string artists) {
+    // tried using regex and being lazy but doesnt support (?<!\\)/ or something
+    // well whatever this works probably better
+    std::string result = "";
+
+    bool nextSlashIsEscaped = false;
+    for (char character : artists) {
+        if (character == '\\') {
+            nextSlashIsEscaped = true;
+            continue;
+        }
+
+        // apparently id3v2.4 accepts null bytes as a delimiter :worried:
+        if ((character == '/' || character == '\0') && !nextSlashIsEscaped) {
+            result += ", ";
+            continue;
+        }
+
+        result += character;
+    }
+
+    return result;
 }
 
 
@@ -571,10 +598,14 @@ void AudioManager::exitEditor() {
     m_isInEditor = false;
     if (m_songs.empty()) return;
 
-    m_channel->stop(); // will cause it to be freed
-    m_channel = nullptr;
     m_queue.clear();
     m_history.clear();
+
+    if (m_channel) {
+        m_channel->stop(); // will cause it to be freed
+        m_channel = nullptr;
+    }
+
 }
 
 void AudioManager::checkSongPreload() {
@@ -615,5 +646,8 @@ void AudioManager::onCloseGDWindow() {
     m_songs.clear();
 
     // there's a chance an extra frame gets rendered and SongInfoPopup crashes
-    if (auto pop = SongInfoPopup::get()) pop->close();
+    if (cocos2d::CCScene::get()) {
+        auto pop = SongInfoPopup::get();
+        if (pop) pop->close();
+    }
 }
