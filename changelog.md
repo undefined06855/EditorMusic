@@ -1,4 +1,8 @@
 # EditorMusic
+## v2.1.14
+- Fix songs longer than one hour or take up more space than memory available on the system
+- Make reading metadata more consistent and less crashable when filtering invalid characters
+- Include more information in crashlogs and add more error checking
 ## v2.1.13
 - Format multiple artists correctly
 - Fix hardware buttons not working and music not closing when game is closed

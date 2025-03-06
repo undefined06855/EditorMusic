@@ -132,13 +132,30 @@ bool AudioManager::isValidAudioFile(std::filesystem::path path) {
 
 void AudioManager::populateAudioSourceInfo(std::shared_ptr<AudioSource> source) {
     // load song, get info, deload song
-    em::log::debug("Populating audio source info...");
+    em::log::debug("Populating audio source info for {}", source->m_path.filename());
     geode::log::pushNest();
 
     // FMOD_OPENONLY loads it but does not allocate memory for the actual sound data
     // so is great for just reading the metadata
+    // just kidding apparently it checks size limitations and wont load if it's
+    // going to be too large even though it doesnt read the whole file anyway :sob:
     FMOD::Sound* sound;
-    m_system->createSound(source->m_path.string().c_str(), FMOD_OPENONLY, nullptr, &sound);
+    auto ret = m_system->createSound(source->m_path.string().c_str(), FMOD_OPENONLY, nullptr, &sound);
+    if (ret != FMOD_OK) {
+        em::log::warn("FMOD error (1): {} (0x{:02X})", FMOD_ErrorString(ret), (int)ret);
+
+        if ((int)ret == 0x26) {
+            geode::log::debug("Not enough memory detected! Streaming in for metadata...");
+            // not enough memory or resources - someone has a too chunky song
+            // stream it in instead (though pretty silly)
+
+            auto ret = FMODAudioEngine::sharedEngine()->m_system->createStream(source->m_path.string().c_str(), FMOD_CREATESTREAM, nullptr, &sound);
+            if (ret != FMOD_OK) {
+                em::log::warn("FMOD error (1.1): {} (0x{:02X})", FMOD_ErrorString(ret), (int)ret);
+                return;
+            }
+        } else return; // failed to read metadata
+    }
 
     // figure out metadata for name and if it exists
     std::map<std::string, std::string> nameExtensionMap = {
@@ -148,10 +165,15 @@ void AudioManager::populateAudioSourceInfo(std::shared_ptr<AudioSource> source) 
         { ".flac", "TITLE" }
     };
     FMOD_TAG nameTag;
-    if (sound->getTag(nameExtensionMap[source->m_path.extension().string()].c_str(), 0, &nameTag) == FMOD_ERR_TAGNOTFOUND) {
+    std::string nameTagString = nameExtensionMap[source->m_path.extension().string()];
+    if (sound->getTag(nameTagString.c_str(), 0, &nameTag) == FMOD_ERR_TAGNOTFOUND) {
         em::log::debug("Using fallback, title not found");
         source->m_name = figureOutFallbackName(source->m_path);
-    } else source->m_name = populateStringTag(nameTag, true, source);
+    } else {
+        geode::utils::thread::setName(fmt::format("EditorMusic Tag Population (name for {})", nameTagString, source->m_path.filename()));
+        source->m_name = populateStringTag(nameTag, true, source);
+        geode::utils::thread::setName("EditorMusic Song Loading");
+    }
 
     // figure out metadata for artist and if it exists
     std::map<std::string, std::string> artistExtensionMap = {
@@ -161,19 +183,24 @@ void AudioManager::populateAudioSourceInfo(std::shared_ptr<AudioSource> source) 
         { ".flac", "ARTIST" }
     };
     FMOD_TAG artistTag;
-    if (sound->getTag(artistExtensionMap[source->m_path.extension().string()].c_str(), 0, &artistTag) == FMOD_ERR_TAGNOTFOUND) {
+    std::string artistTagString = artistExtensionMap[source->m_path.extension().string()];
+    if (sound->getTag(artistTagString.c_str(), 0, &artistTag) == FMOD_ERR_TAGNOTFOUND) {
         em::log::debug("Using fallback, artist not found");
         source->m_artist = "Unknown";
     } else {
+        geode::utils::thread::setName(fmt::format("EditorMusic Tag Population (artist for {})", artistTagString, source->m_path.filename()));
         auto unformatted = populateStringTag(artistTag, false);
         source->m_artist = formatArtistString(unformatted);
+        geode::utils::thread::setName("EditorMusic Song Loading");
     }
 
     // only mp3 covers supported for now
     FMOD_TAG albumCoverTag;
     if (source->m_path.extension().string() == ".mp3") {
+        geode::utils::thread::setName(fmt::format("EditorMusic Tag Population (album for {})", artistTagString, source->m_path.filename()));
         FMOD_RESULT albumRes = sound->getTag("APIC", 0, &albumCoverTag);
         if (albumRes != FMOD_ERR_TAGNOTFOUND) populateAlbumCover(source, albumCoverTag);
+        geode::utils::thread::setName("EditorMusic Song Loading");
     }
 
 	sound->getLength(&source->m_length, FMOD_TIMEUNIT_MS);
@@ -184,7 +211,8 @@ void AudioManager::populateAudioSourceInfo(std::shared_ptr<AudioSource> source) 
 }
 
 std::string AudioManager::populateStringTag(FMOD_TAG tag, bool useTitleFallback, std::shared_ptr<AudioSource> sourceForFallback) {
-    em::log::debug("Populating string tag for {}", tag.name);
+    // this log always crashes
+    // em::log::debug("Populating string tag for {}", tag.name);
     geode::log::NestScope scope;
 
     // simdutf::autodetect_encoding does exist but there's no point using it
@@ -257,6 +285,8 @@ void AudioManager::populateAlbumCover(std::shared_ptr<AudioSource> source, FMOD_
     // https://id3.org/id3v2.4.0-frames 4.14 Attached Picture
     char* data = (char*)tag.data;
     int i = 0;
+
+    if (!data) return; // idk sometimes happens
 
     char textEncoding = data[i++];
     std::string mimeType = std::string((const char*)(data + i)); i += mimeType.length();
@@ -335,13 +365,22 @@ std::string AudioManager::figureOutFallbackName(std::filesystem::path path) {
 }
 
 std::string AudioManager::filterNameThruRegex(std::string songName) {
-    size_t potentialNullByte = songName.find('\0');
-    if (potentialNullByte != std::string::npos) songName.erase(potentialNullByte);
+    // used to be regex of [^ -~•]+ which worked but crashed more often than not
+    // also dropped bullet point support because i think only utf8 strings get
+    // passed in to this function so bullet points will be stripped by simdutf
 
-    // regex of chars that are in bigFont.fnt
-    // any character from space to ~ and also bullet point (u2022)
-    // this matches any character that isnt that and replaces it with a question mark
-    return std::regex_replace(songName, std::regex("[^ -~•]+"), "?");
+    std::string ret = "";
+
+    for (int i = 0; i < songName.length(); i++) {
+        char character = songName[i];
+
+        if (character == 0x00) continue;
+        if (character < ' ' || character > '~') character = '?';
+
+        ret += character;
+    }
+
+    return ret;
 }
 
 std::string AudioManager::formatArtistString(std::string artists) {
@@ -522,7 +561,7 @@ void AudioManager::startPlayingCurrentSong() {
     m_playCurrentSongQueuedForLoad = false;
     auto ret = m_system->playSound(getCurrentSong()->m_sound, nullptr, m_isPaused, &m_channel); 
     updateLowPassFilter();
-    if (ret != FMOD_OK) em::log::warn("FMOD error: {} (0x{:02X})", FMOD_ErrorString(ret), (int)ret);
+    if (ret != FMOD_OK) em::log::warn("FMOD error (0): {} (0x{:02X})", FMOD_ErrorString(ret), (int)ret);
     em::log::debug("Music time!");
 
     em::rift_labels::set(em::rift_labels::g_labelCurrentSong, getCurrentSong()->m_name);

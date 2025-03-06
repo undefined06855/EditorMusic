@@ -3,18 +3,15 @@
 namespace em::utils {
 
 std::string formatTime(unsigned int ms) {
-    int seconds = ms / 1000;
-    int minutes = (seconds / 60) % 60;
-    int hours = minutes / 60;
-    int formattedSeconds = seconds % 60;
+    int rawSeconds = ms / 1000;
+    
+    int minutes = (rawSeconds / 60) % 60;
+    int hours = (rawSeconds / 60) / 60;
+    int seconds = rawSeconds % 60;
 
-    if (minutes == 0) {
-        return fmt::format("00:{:02}", formattedSeconds);
-    } else if (hours == 0) {
-        return fmt::format("{:02}:{:02}", minutes, formattedSeconds);
-    } else {
-        return fmt::format("{:02}:{:02}:{:02}", hours, minutes, formattedSeconds);
-    }
+    if (minutes == 0 && hours == 0) return fmt::format("00:{:02}", seconds);
+    if (hours == 0) return fmt::format("{:02}:{:02}", minutes, seconds);
+    return fmt::format("{:02}:{:02}:{:02}", hours, minutes, seconds);
 }
 
 cocos2d::CCImage::EImageFormat mimeTypeToFormat(std::string mimeType) {

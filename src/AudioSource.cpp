@@ -1,4 +1,6 @@
 #include "AudioSource.hpp"
+#include <fmod_errors.h>
+#include "log.hpp"
 
 AudioSource::AudioSource(std::filesystem::path path)
     : m_path(path)
@@ -21,7 +23,8 @@ void AudioSource::loadAudioThreaded() {
 void AudioSource::loadAudio() {
     geode::utils::thread::setName(fmt::format("Audio Loading: {}", m_name));
     m_isLoadingAudio = true;
-	FMODAudioEngine::sharedEngine()->m_system->createStream(m_path.string().c_str(), FMOD_CREATESTREAM, nullptr, &m_sound);
+	auto ret = FMODAudioEngine::sharedEngine()->m_system->createStream(m_path.string().c_str(), FMOD_CREATESTREAM, nullptr, &m_sound);
+    if (ret != FMOD_OK) em::log::warn("FMOD error (2): {} (0x{:02X})", FMOD_ErrorString(ret), (int)ret);
     m_sound->setLoopCount(0);
     m_hasLoadedAudio = true;
     m_isLoadingAudio = false;
