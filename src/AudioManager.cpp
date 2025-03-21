@@ -144,7 +144,7 @@ void AudioManager::populateAudioSourceInfo(std::shared_ptr<AudioSource> source) 
     if (ret != FMOD_OK) {
         em::log::warn("FMOD error (1): {} (0x{:02X})", FMOD_ErrorString(ret), (int)ret);
 
-        if ((int)ret == 0x26) {
+        if (ret == FMOD_ERR_MEMORY) {
             geode::log::debug("Not enough memory detected! Streaming in for metadata...");
             // not enough memory or resources - someone has a too chunky song
             // stream it in instead (though pretty silly)
