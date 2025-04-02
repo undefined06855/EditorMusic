@@ -18,7 +18,11 @@
 
 	"dependencies": {
 		"geode.node-ids": "1.19.0",
-		"geode.custom-keybinds": "1.10.2"
+		"geode.custom-keybinds": {
+			"version": "1.10.2",
+			"platforms": [ "win", "android32", "android64", "macos" ],
+			"importance": "required"
+		}
 	},
 	
 	"links": {

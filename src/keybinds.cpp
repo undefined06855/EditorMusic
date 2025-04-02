@@ -1,3 +1,4 @@
+#ifndef GEODE_IS_IOS
 #include <geode.custom-keybinds/include/Keybinds.hpp>
 
 $on_mod(Loaded) {
@@ -28,3 +29,5 @@ $on_mod(Loaded) {
 		false
 	});
 }
+
+#endif

@@ -1,5 +1,7 @@
 #include "LevelEditorLayer.hpp"
+#ifndef GEODE_IS_IOS
 #include <geode.custom-keybinds/include/Keybinds.hpp>
+#endif
 #include "../AudioManager.hpp"
 #include "../log.hpp"
 #include "../ui/SongInfoPopup.hpp"
@@ -27,6 +29,7 @@ bool HookedLevelEditorLayer::init(GJGameLevel* p0, bool p1) {
     if (!isLikelyObjectWorkshop) AudioManager::get().enterEditor();
     else em::log::debug("prevented enterEditor because likely object workshop!");
     
+#ifndef GEODE_IS_IOS
     addEventListener<keybinds::InvokeBindFilter>([](keybinds::InvokeBindEvent* event) {
         if (event->isDown()) {
             em::log::debug("Keybind: Pause");
@@ -53,6 +56,7 @@ bool HookedLevelEditorLayer::init(GJGameLevel* p0, bool p1) {
 
         return geode::ListenerResult::Propagate;
     }, "prev-song"_spr);
+#endif
 
     return true;
 }
