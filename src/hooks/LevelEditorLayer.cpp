@@ -72,8 +72,8 @@ void HookedLevelEditorLayer::updateEditor(float dt) {
     // song just changed, set label + run anim
     fields->m_songPopupLabel->setString(fmt::format("Now Playing: {}", currentSong->getCombinedSongName()).c_str());
 
-    // not found for imac and i cant be bothered to wait
-#ifndef GEODE_IS_MACOS
+    // not on apple platforms
+#ifndef __APPLE__
     if (fields->m_songPopupLabel->numberOfRunningActions() > 0) return;
 #endif
     fields->m_songPopupLabel->runAction(
@@ -87,7 +87,7 @@ void HookedLevelEditorLayer::updateEditor(float dt) {
                 cocos2d::CCFadeOut::create(.5f),
                 cocos2d::CCEaseExponentialIn::create(cocos2d::CCMoveBy::create(.5f, { 0.f, 15.f }))
             ),
-            NULL
+            nullptr
         )
     );
 }

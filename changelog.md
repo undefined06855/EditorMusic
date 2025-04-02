@@ -1,4 +1,6 @@
 # EditorMusic
+## v2.1.15
+- iOS support!
 ## v2.1.14
 - Fix songs longer than one hour or take up more space than memory available on the system
 - Make reading metadata more consistent and less crashable when filtering invalid characters
