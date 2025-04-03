@@ -61,8 +61,8 @@ bool HookedLevelEditorLayer::init(GJGameLevel* p0, bool p1) {
     return true;
 }
 
-void HookedLevelEditorLayer::updateEditor(float dt) {
-    LevelEditorLayer::updateEditor(dt);
+void HookedLevelEditorLayer::postUpdate(float dt) {
+    LevelEditorLayer::postUpdate(dt);
 
     if (!AudioManager::get().shouldAllowAudioFunctions()) return;
 

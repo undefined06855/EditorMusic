@@ -9,5 +9,5 @@ class $modify(HookedLevelEditorLayer, LevelEditorLayer) {
     };
 
     bool init(GJGameLevel* p0, bool p1);
-    void updateEditor(float dt);
+    void postUpdate(float dt);
 };
