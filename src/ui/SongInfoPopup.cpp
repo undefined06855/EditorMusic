@@ -95,14 +95,14 @@ bool SongInfoPopup::setup() {
     m_mainLayer->addChildAtPosition(m_progressLabel, geode::Anchor::BottomLeft, { 7.5f, 13.f });
 
 
-    auto playPauseButton = CCMenuItemToggler::create(
+    m_playPauseButton = CCMenuItemToggler::create(
         cocos2d::CCSprite::createWithSpriteFrameName("GJ_pauseBtn_001.png"),
         cocos2d::CCSprite::createWithSpriteFrameName("GJ_playMusicBtn_001.png"),
         this, menu_selector(SongInfoPopup::onPlayPause)
     );
-    playPauseButton->setID("play-pause-btn");
-    playPauseButton->toggle(AudioManager::get().m_isPaused);
-    m_buttonMenu->addChildAtPosition(playPauseButton, geode::Anchor::Bottom);
+    m_playPauseButton->setID("play-pause-btn");
+    m_playPauseButton->toggle(AudioManager::get().m_isPaused);
+    m_buttonMenu->addChildAtPosition(m_playPauseButton, geode::Anchor::Bottom);
 
     auto prevSprite = geode::CircleButtonSprite::createWithSpriteFrameName("edit_leftBtn2_001.png");
     auto leftSpr = prevSprite->getTopNode();

@@ -1,6 +1,8 @@
 # EditorMusic
 ## v2.1.15
 - iOS support!
+- Fix issues with the pause keybind not updating the button in the current song popup
+- Fix issues with the current song popup not closing if you closed the editor pause menu
 ## v2.1.14
 - Fix songs longer than one hour or take up more space than memory available on the system
 - Make reading metadata more consistent and less crashable when filtering invalid characters

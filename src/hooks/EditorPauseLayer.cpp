@@ -1,6 +1,7 @@
 #include "EditorPauseLayer.hpp"
 #include "../AudioManager.hpp"
 #include "../ui/CurrentSongNode.hpp"
+#include "../ui/SongInfoPopup.hpp"
 #include "../log.hpp"
 
 void HookedEditorPauseLayer::onModify(auto& self) {
@@ -35,6 +36,17 @@ void HookedEditorPauseLayer::onSaveAndPlay(cocos2d::CCObject* sender) {
     em::log::info("Exited editor, onSaveAndPlay");
     AudioManager::get().exitEditor();
     EditorPauseLayer::onSaveAndPlay(sender);
+}
+
+void HookedEditorPauseLayer::onResume(cocos2d::CCObject* sender) {
+    // dont allow exiting if the song info popup is on screen
+    // in fact this will be when the user presses space, so toggle pause
+    if (auto pop = SongInfoPopup::get()) {
+        pop->m_playPauseButton->activate();
+        return;
+    }
+    
+    EditorPauseLayer::onResume(sender);
 }
 
 bool HookedEditorPauseLayer::init(LevelEditorLayer* editor) {

@@ -12,4 +12,5 @@ class $modify(HookedEditorPauseLayer, EditorPauseLayer) {
 #endif
     void onSaveAndExit(cocos2d::CCObject* sender);
     void onSaveAndPlay(cocos2d::CCObject* sender);
+    void onResume(cocos2d::CCObject* sender);
 };

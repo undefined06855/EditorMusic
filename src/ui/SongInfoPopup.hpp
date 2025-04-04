@@ -21,6 +21,7 @@ public:
     geode::LoadingSpinner* m_loadingCircle;
 
     cocos2d::CCMenu* m_layoutedButtonMenu;
+    CCMenuItemToggler* m_playPauseButton;
 
     bool m_isInStrippedBackMode;
 

@@ -33,7 +33,12 @@ bool HookedLevelEditorLayer::init(GJGameLevel* p0, bool p1) {
     addEventListener<keybinds::InvokeBindFilter>([](keybinds::InvokeBindEvent* event) {
         if (event->isDown()) {
             em::log::debug("Keybind: Pause");
-            AudioManager::get().togglePause();
+            
+            if (auto pop = SongInfoPopup::get()) {
+                pop->m_playPauseButton->activate();
+            } else {
+                AudioManager::get().togglePause();
+            }
         }
 
         return geode::ListenerResult::Propagate;

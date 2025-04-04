@@ -5,7 +5,7 @@ $on_mod(Loaded) {
 	keybinds::BindManager::get()->registerBindable({
 		"pause-song"_spr,
 		"Play/Pause",
-		"",
+		"A keybind to toggle pause when not in the current song popup. This will not override space to pause the song when inside the current song popup!",
 		{ keybinds::Keybind::create(cocos2d::KEY_P, keybinds::Modifier::Control) },
 		keybinds::Category::EDITOR,
 		false
