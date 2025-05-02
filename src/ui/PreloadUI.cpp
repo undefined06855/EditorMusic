@@ -104,7 +104,7 @@ void PreloadUI::runCompleteAnimationAndRemove() {
             ),
             cocos2d::CCDelayTime::create(.5f),
             cocos2d::CCRemoveSelf::create(),
-            NULL
+            nullptr
         )
     );
 }

@@ -28,7 +28,7 @@ bool SongInfoPopup::setup() {
 
     m_isInStrippedBackMode = false;
 
-    auto am = AudioManager::get();
+    auto& am = AudioManager::get();
     if (am.m_songs.empty()) {
         m_isInStrippedBackMode = true;
 

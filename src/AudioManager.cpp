@@ -548,6 +548,7 @@ void AudioManager::startPlayingCurrentSong() {
     em::log::debug("start playing m_queue[0]");
     if (m_channel) m_channel->stop();
 
+    // should be preloaded hopefully but may not be, if not instantly load this
     if (!getCurrentSong()->m_hasLoadedAudio) {
         // uh oh
         em::log::debug("uh oh not loaded audio yet, m_playCurrentSongQueuedForLoad = {}", m_playCurrentSongQueuedForLoad);
@@ -650,25 +651,42 @@ void AudioManager::exitEditor() {
 void AudioManager::checkSongPreload() {
     em::log::debug("Check song preload...");
 
-    // go through all songs and see...
-    for (auto song : m_songs) {
-        // check if it's either in the first three songs in the queue or first
-        // three songs in history, if so it should be loaded
-        // ternary used for readability
-        // just dont worry about this it's simple and there's not a similarly
-        // performant way to rewrite this without it being massive
-        bool shouldBeLoaded = \
-            (m_queue.size() < 3 ? true : (m_queue[0] == song || m_queue[1] == song || m_queue[2] == song)) ||
-            (m_history.size() < 3 ? true : (m_history[0] == song || m_history[1] == song || m_history[2] == song));
+    // check if it's either in the first three songs in the queue or last three
+    // songs in history, if so it should be preloaded
+    // includes current song!
 
-        // see if we need to delete or load the sound
+    for (auto song : m_history) {
+        bool shouldBeLoaded = \
+            m_history.size() < 3
+         || song == m_history[m_history.size() - 1]
+         || song == m_history[m_history.size() - 2]
+         || song == m_history[m_history.size() - 3];
+
         if (song->m_hasLoadedAudio && !shouldBeLoaded) {
-            // delete
+            // has loaded audio but shouldnt
             song->m_sound->release();
             song->m_sound = nullptr;
             song->m_hasLoadedAudio = false;
         } else if (!song->m_hasLoadedAudio && shouldBeLoaded) {
-            // load
+            // doesnt have loaded audio but should
+            song->loadAudioThreaded();
+        }
+    }
+
+    for (auto song : m_queue) {
+        bool shouldBeLoaded = \
+            m_queue.size() < 3
+         || song == m_queue[m_queue.size() - 1]
+         || song == m_queue[m_queue.size() - 2]
+         || song == m_queue[m_queue.size() - 3];
+
+        if (song->m_hasLoadedAudio && !shouldBeLoaded) {
+            // has loaded audio but shouldnt
+            song->m_sound->release();
+            song->m_sound = nullptr;
+            song->m_hasLoadedAudio = false;
+        } else if (!song->m_hasLoadedAudio && shouldBeLoaded) {
+            // doesnt have loaded audio but should
             song->loadAudioThreaded();
         }
     }
