@@ -4,11 +4,19 @@
 #include "ui/PreloadUI.hpp"
 #include <random>
 
+struct LoadIssue {
+    std::string m_message;
+    FMOD_RESULT m_type;
+};
+
 class AudioManager {
     AudioManager();
 public:
     static AudioManager& get();
     void init();
+
+    bool m_shownLoadIssues;
+    std::vector<LoadIssue> m_loadIssues;
 
     std::deque<std::shared_ptr<AudioSource>> m_queue;
     std::deque<std::shared_ptr<AudioSource>> m_history;
@@ -42,7 +50,7 @@ public:
     void populateSongsThread();
     void setupPreloadUIFromPath(std::filesystem::path path);
     void populateSongsFromPath(std::filesystem::path path);
-    void populateAudioSourceInfo(std::shared_ptr<AudioSource> source);
+    bool populateAudioSourceInfo(std::shared_ptr<AudioSource> source);
     std::string populateStringTag(FMOD_TAG tag, bool useTitleFallback, std::shared_ptr<AudioSource> sourceForFallback = nullptr);
     void populateAlbumCover(std::shared_ptr<AudioSource> source, FMOD_TAG tag);
     std::string figureOutFallbackName(std::filesystem::path path);
@@ -77,4 +85,6 @@ public:
     void exitEditor();
 
     void onCloseGDWindow();
+
+    void showLoadErrors(cocos2d::CCScene* scene);
 };

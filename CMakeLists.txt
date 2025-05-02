@@ -25,7 +25,7 @@ endif()
 add_subdirectory($ENV{GEODE_SDK} ${CMAKE_CURRENT_BINARY_DIR}/geode)
 
 set(SIMDUTF_TOOLS OFF)
-CPMAddPackage("gh:simdutf/simdutf@6.0.0")
+CPMAddPackage("gh:simdutf/simdutf@7.0.0")
 target_link_libraries(${PROJECT_NAME} simdutf)
 
 setup_geode_mod(${PROJECT_NAME})

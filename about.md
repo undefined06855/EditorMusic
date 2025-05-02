@@ -18,3 +18,4 @@ If your game crashes on startup as a result of installing this mod, **please** e
 - Songs with non latin characters (A-z), numbers, spaces or - and _ in the song title
 - Songs with non ascii characters in the metadata
 - Songs with metadata not formatted as UTF-8
+- Renamed mp4 files (though if your music is of an obscure format and it is certainly an audio file, try renaming to an mp3 to force the mod to attempt to load it!)

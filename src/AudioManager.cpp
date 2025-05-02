@@ -1,4 +1,6 @@
 #include "AudioManager.hpp"
+#include "Geode/binding/FLAlertLayer.hpp"
+#include "fmod_common.h"
 #include "ui/SongInfoPopup.hpp"
 #include <Geode/fmod/fmod_errors.h>
 #include <regex>
@@ -13,7 +15,10 @@ AudioManager& AudioManager::get() {
 }
 
 AudioManager::AudioManager() 
-    : m_channel(nullptr)
+    : m_shownLoadIssues(false)
+    , m_loadIssues({})
+
+    , m_channel(nullptr)
     , m_system(FMODAudioEngine::sharedEngine()->m_system)
     , m_volume(1.f)
 
@@ -96,8 +101,14 @@ void AudioManager::setupPreloadUIFromPath(std::filesystem::path path) {
     if (!std::filesystem::exists(path)) return;
     em::log::debug("Populating song total from path...");
     for (const auto& file : std::filesystem::directory_iterator(path.string())) {
-        if (std::filesystem::is_regular_file(file) && isValidAudioFile(file)) m_preloadUI->m_totalSongs++;
-        if (std::filesystem::is_directory(file)) setupPreloadUIFromPath(file);
+        if (std::filesystem::is_directory(file)) {
+            setupPreloadUIFromPath(file);
+            continue;
+        }
+
+        if (!isValidAudioFile(file)) continue;
+
+        m_preloadUI->m_totalSongs++;
     }
 }
 
@@ -115,22 +126,39 @@ void AudioManager::populateSongsFromPath(std::filesystem::path path) {
         if (!isValidAudioFile(file)) continue;
 
         auto source = std::make_shared<AudioSource>(file.path());
-        populateAudioSourceInfo(source);
-        m_songs.push_back(source);
-        geode::Loader::get()->queueInMainThread([this, source] {
-            m_preloadUI->increment(source->m_name);
-        });
+        bool ret = populateAudioSourceInfo(source);
+        if (ret) {
+            m_songs.push_back(source);
+            geode::Loader::get()->queueInMainThread([this, source] {
+                m_preloadUI->increment(source->m_name);
+            });
+        } else {
+            geode::Loader::get()->queueInMainThread([this] {
+                m_preloadUI->increment("(Invalid song)");
+            });
+        }
     }
 }
 
 bool AudioManager::isValidAudioFile(std::filesystem::path path) {
-    if (!std::filesystem::is_regular_file(path)) return false;
-    
-    static const std::array<std::string, 4> validFiles = { ".mp3", ".wav", ".ogg", ".flac" };
+    static const std::array<std::string, 20> validFiles = {
+        ".mp3", ".wav", ".ogg", ".flac", // certain
+        // rest are according to wikipedia and im more than 50% convinced by
+        ".aiff", ".aif", ".aifc",
+        ".asf", ".wma", ".wmv",
+        ".asx",
+        ".it", ".midi", ".mid",
+        ".m3u", ".m3u8",
+        ".mp2",
+        ".pls",
+        ".s3m",
+        ".wma"
+    };
+
     return std::find(validFiles.begin(), validFiles.end(), path.extension()) != validFiles.end();
 }
 
-void AudioManager::populateAudioSourceInfo(std::shared_ptr<AudioSource> source) {
+bool AudioManager::populateAudioSourceInfo(std::shared_ptr<AudioSource> source) {
     // load song, get info, deload song
     em::log::debug("Populating audio source info for {}", source->m_path.filename());
     geode::log::pushNest();
@@ -152,9 +180,30 @@ void AudioManager::populateAudioSourceInfo(std::shared_ptr<AudioSource> source) 
             auto ret = FMODAudioEngine::sharedEngine()->m_system->createStream(source->m_path.string().c_str(), FMOD_CREATESTREAM, nullptr, &sound);
             if (ret != FMOD_OK) {
                 em::log::warn("FMOD error (1.1): {} (0x{:02X})", FMOD_ErrorString(ret), (int)ret);
-                return;
+                return false;
             }
-        } else return; // failed to read metadata
+        } else {
+            // failed to read - most likely unsupported format
+            m_loadIssues.push_back(LoadIssue{
+                .m_message = source->m_path.filename().string(),
+                .m_type = ret
+            });
+            return false;
+        }
+    }
+
+    auto extension = source->m_path.extension().string();
+    std::array<std::string, 4> supportedMetadataFormats = { ".mp3", ".wav", ".ogg", ".flac" };
+    if (std::find(supportedMetadataFormats.begin(), supportedMetadataFormats.end(), extension) == supportedMetadataFormats.end()) {
+        // not supported for getting metadata
+        source->m_name = figureOutFallbackName(source->m_path);
+        source->m_artist = "Unknown";
+	    sound->getLength(&source->m_length, FMOD_TIMEUNIT_MS);
+
+        geode::log::popNest();
+        em::log::info("Loaded song info for {}! (was not supported for metadata)", source->m_name);
+        sound->release();
+        return true;
     }
 
     // figure out metadata for name and if it exists
@@ -165,7 +214,7 @@ void AudioManager::populateAudioSourceInfo(std::shared_ptr<AudioSource> source) 
         { ".flac", "TITLE" }
     };
     FMOD_TAG nameTag;
-    std::string nameTagString = nameExtensionMap[source->m_path.extension().string()];
+    std::string nameTagString = nameExtensionMap[extension];
     if (sound->getTag(nameTagString.c_str(), 0, &nameTag) == FMOD_ERR_TAGNOTFOUND) {
         em::log::debug("Using fallback, title not found");
         source->m_name = figureOutFallbackName(source->m_path);
@@ -183,7 +232,7 @@ void AudioManager::populateAudioSourceInfo(std::shared_ptr<AudioSource> source) 
         { ".flac", "ARTIST" }
     };
     FMOD_TAG artistTag;
-    std::string artistTagString = artistExtensionMap[source->m_path.extension().string()];
+    std::string artistTagString = artistExtensionMap[extension];
     if (sound->getTag(artistTagString.c_str(), 0, &artistTag) == FMOD_ERR_TAGNOTFOUND) {
         em::log::debug("Using fallback, artist not found");
         source->m_artist = "Unknown";
@@ -203,11 +252,14 @@ void AudioManager::populateAudioSourceInfo(std::shared_ptr<AudioSource> source) 
         geode::utils::thread::setName("EditorMusic Song Loading");
     }
 
+    // if anything added here make sure to add to early return
 	sound->getLength(&source->m_length, FMOD_TIMEUNIT_MS);
 
     geode::log::popNest();
     em::log::info("Loaded song info for {}!", source->m_name);
     sound->release();
+
+    return true;
 }
 
 std::string AudioManager::populateStringTag(FMOD_TAG tag, bool useTitleFallback, std::shared_ptr<AudioSource> sourceForFallback) {
@@ -707,4 +759,31 @@ void AudioManager::onCloseGDWindow() {
         auto pop = SongInfoPopup::get();
         if (pop) pop->close();
     }
+}
+
+void AudioManager::showLoadErrors(cocos2d::CCScene* scene) {
+    if (m_loadIssues.size() == 0) return;
+    if (m_shownLoadIssues) return;
+
+    m_shownLoadIssues = true;
+
+    std::string message = "### One or more <cj>songs</c> had issues loading!\n";
+
+    for (auto issue : m_loadIssues) {
+        switch(issue.m_type) {
+            case FMOD_ERR_FORMAT:
+                message += fmt::format("`{}`: <cr>Unsupported format!</c> (`0x{:02X}`)", issue.m_message, (int)issue.m_type);
+                break;
+
+            default:
+                message += fmt::format("`{}`: <cr>{}</c> (`0x{:02X}`))", issue.m_message, FMOD_ErrorString(issue.m_type), (int)issue.m_type);
+                break;
+        }
+
+        message += "\n\n";
+    }
+
+    auto pop = geode::MDPopup::create("EditorMusic", message, "ok");
+    pop->m_scene = scene;
+    pop->show();
 }
