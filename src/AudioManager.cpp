@@ -3,7 +3,6 @@
 #include "fmod_common.h"
 #include "ui/SongInfoPopup.hpp"
 #include <Geode/fmod/fmod_errors.h>
-#include <regex>
 #include "simdutf.h"
 #include "utils.hpp"
 #include "log.hpp"
