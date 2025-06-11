@@ -1,5 +1,4 @@
 #include "AudioManager.hpp"
-#include "Geode/binding/FLAlertLayer.hpp"
 #include "fmod_common.h"
 #include "ui/SongInfoPopup.hpp"
 #include <Geode/fmod/fmod_errors.h>
@@ -41,11 +40,14 @@ AudioManager::AudioManager()
     , m_easers({})
     
     , m_gen(std::random_device{}())
-    , m_randomSongGenerator(0, 0) {}
+    , m_randomSongGenerator(0, 0)
+    
+    , m_textureCache({}) {}
 
 void AudioManager::init() {
     m_system->createDSPByType(FMOD_DSP_TYPE_LOWPASS, &m_lowPassFilter);
     m_lowPassFilter->setParameterFloat(FMOD_DSP_LOWPASS_RESONANCE, 0.f);
+    cocos2d::CCScheduler::get()->scheduleUpdateForTarget(this, 0, false);
 }
 
 void AudioManager::populateSongs() {
@@ -99,7 +101,7 @@ void AudioManager::populateSongsThread() {
 void AudioManager::setupPreloadUIFromPath(std::filesystem::path path) {
     if (!std::filesystem::exists(path)) return;
     em::log::debug("Populating song total from path...");
-    for (const auto& file : std::filesystem::directory_iterator(path.string())) {
+    for (const auto& file : std::filesystem::directory_iterator(path)) {
         if (std::filesystem::is_directory(file)) {
             setupPreloadUIFromPath(file);
             continue;
@@ -115,7 +117,7 @@ void AudioManager::populateSongsFromPath(std::filesystem::path path) {
     if (!std::filesystem::exists(path)) return;
     em::log::debug("Populating songs from path...");
 
-    for (const auto& file : std::filesystem::directory_iterator(path.string())) {
+    for (const auto& file : std::filesystem::directory_iterator(path)) {
         if (std::filesystem::is_directory(file)) {
             // stack overflow from the person with 10000 folders inside each other incoming
             populateSongsFromPath(file);
@@ -162,21 +164,23 @@ bool AudioManager::populateAudioSourceInfo(std::shared_ptr<AudioSource> source) 
     em::log::debug("Populating audio source info for {}", source->m_path.filename());
     geode::log::pushNest();
 
+    auto pathString = geode::utils::string::pathToString(source->m_path);
+
     // FMOD_OPENONLY loads it but does not allocate memory for the actual sound data
     // so is great for just reading the metadata
     // just kidding apparently it checks size limitations and wont load if it's
     // going to be too large even though it doesnt read the whole file anyway :sob:
     FMOD::Sound* sound;
-    auto ret = m_system->createSound(source->m_path.string().c_str(), FMOD_OPENONLY, nullptr, &sound);
+    auto ret = m_system->createSound(pathString.c_str(), FMOD_OPENONLY | FMOD_ACCURATETIME, nullptr, &sound);
     if (ret != FMOD_OK) {
         em::log::warn("FMOD error (1): {} (0x{:02X})", FMOD_ErrorString(ret), (int)ret);
 
         if (ret == FMOD_ERR_MEMORY) {
-            geode::log::debug("Not enough memory detected! Streaming in for metadata...");
+            em::log::debug("Not enough memory detected! Streaming in for metadata...");
             // not enough memory or resources - someone has a too chunky song
             // stream it in instead (though pretty silly)
 
-            auto ret = FMODAudioEngine::sharedEngine()->m_system->createStream(source->m_path.string().c_str(), FMOD_CREATESTREAM, nullptr, &sound);
+            auto ret = FMODAudioEngine::sharedEngine()->m_system->createStream(pathString.c_str(), FMOD_CREATESTREAM | FMOD_ACCURATETIME, nullptr, &sound);
             if (ret != FMOD_OK) {
                 em::log::warn("FMOD error (1.1): {} (0x{:02X})", FMOD_ErrorString(ret), (int)ret);
                 return false;
@@ -184,14 +188,14 @@ bool AudioManager::populateAudioSourceInfo(std::shared_ptr<AudioSource> source) 
         } else {
             // failed to read - most likely unsupported format
             m_loadIssues.push_back(LoadIssue{
-                .m_message = source->m_path.filename().string(),
+                .m_message = geode::utils::string::pathToString(source->m_path.filename()),
                 .m_type = ret
             });
             return false;
         }
     }
 
-    auto extension = source->m_path.extension().string();
+    auto extension =  geode::utils::string::pathToString(source->m_path.extension());
     std::array<std::string, 4> supportedMetadataFormats = { ".mp3", ".wav", ".ogg", ".flac" };
     if (std::find(supportedMetadataFormats.begin(), supportedMetadataFormats.end(), extension) == supportedMetadataFormats.end()) {
         // not supported for getting metadata
@@ -218,7 +222,7 @@ bool AudioManager::populateAudioSourceInfo(std::shared_ptr<AudioSource> source) 
         em::log::debug("Using fallback, title not found");
         source->m_name = figureOutFallbackName(source->m_path);
     } else {
-        geode::utils::thread::setName(fmt::format("EditorMusic Tag Population (name for {})", nameTagString, source->m_path.filename()));
+        geode::utils::thread::setName(fmt::format("EditorMusic Tag Population (name ({}) for {})", nameTagString, source->m_path.filename()));
         source->m_name = populateStringTag(nameTag, true, source);
         geode::utils::thread::setName("EditorMusic Song Loading");
     }
@@ -236,7 +240,7 @@ bool AudioManager::populateAudioSourceInfo(std::shared_ptr<AudioSource> source) 
         em::log::debug("Using fallback, artist not found");
         source->m_artist = "Unknown";
     } else {
-        geode::utils::thread::setName(fmt::format("EditorMusic Tag Population (artist for {})", artistTagString, source->m_path.filename()));
+        geode::utils::thread::setName(fmt::format("EditorMusic Tag Population (artist ({}) for {})", artistTagString, source->m_path.filename()));
         auto unformatted = populateStringTag(artistTag, false);
         source->m_artist = formatArtistString(unformatted);
         geode::utils::thread::setName("EditorMusic Song Loading");
@@ -244,8 +248,8 @@ bool AudioManager::populateAudioSourceInfo(std::shared_ptr<AudioSource> source) 
 
     // only mp3 covers supported for now
     FMOD_TAG albumCoverTag;
-    if (source->m_path.extension().string() == ".mp3") {
-        geode::utils::thread::setName(fmt::format("EditorMusic Tag Population (album for {})", artistTagString, source->m_path.filename()));
+    if (extension == ".mp3") {
+        geode::utils::thread::setName(fmt::format("EditorMusic Tag Population (album ({}) for {})", artistTagString, source->m_path.filename()));
         FMOD_RESULT albumRes = sound->getTag("APIC", 0, &albumCoverTag);
         if (albumRes != FMOD_ERR_TAGNOTFOUND) populateAlbumCover(source, albumCoverTag);
         geode::utils::thread::setName("EditorMusic Song Loading");
@@ -281,11 +285,13 @@ std::string AudioManager::populateStringTag(FMOD_TAG tag, bool useTitleFallback,
         case FMOD_TAGDATATYPE_STRING_UTF16: {
             em::log::debug("Tag is in utf16");
             // subtract 2 for bom and null byte, divide by two to get utf8 length
+            const char16_t* tagDataExceptBOM = ((char16_t*)tag.data) + 1;
             int length = tag.datalen / 2 - 1;
-            const char16_t* tagDataExceptBOM = (char16_t*)tag.data + 1;
+
+            size_t utf8_length = simdutf::utf8_length_from_utf16le(tagDataExceptBOM, length);
 
             std::string ret;
-            ret.resize(length);
+            ret.resize(utf8_length);
             simdutf::result res = simdutf::convert_utf16le_to_utf8_with_errors(tagDataExceptBOM, length, ret.data());
             if (res.error != simdutf::error_code::SUCCESS) {
                 em::log::warn("Conversion failed at char {}", res.count);
@@ -298,11 +304,13 @@ std::string AudioManager::populateStringTag(FMOD_TAG tag, bool useTitleFallback,
         case FMOD_TAGDATATYPE_STRING_UTF16BE: {
             em::log::debug("Tag is in utf16 but big endian (very silly)");
             // subtract 2 for bom and null byte, divide by two to get utf8 length
+            const char16_t* tagDataExceptBOM = ((char16_t*)tag.data) + 1;
             int length = tag.datalen / 2 - 1;
-            const char16_t* tagDataExceptBOM = (char16_t*)tag.data + 1;
+
+            size_t utf8_length = simdutf::utf8_length_from_utf16be(tagDataExceptBOM, length);
 
             std::string ret;
-            ret.resize(length);
+            ret.resize(utf8_length);
             simdutf::result res = simdutf::convert_utf16be_to_utf8_with_errors(tagDataExceptBOM, length, ret.data());
             if (res.error != simdutf::error_code::SUCCESS) {
                 em::log::warn("Conversion failed at char {}", res.count);
@@ -327,7 +335,7 @@ std::string AudioManager::populateStringTag(FMOD_TAG tag, bool useTitleFallback,
 }
 
 void AudioManager::populateAlbumCover(std::shared_ptr<AudioSource> source, FMOD_TAG tag) {
-    em::log::debug("Reading album cover info...");
+    em::log::debug("Reading album cover info for {}", source->m_name);
     geode::log::NestScope scope;
     // oh baby
     // this assumes reading the tag and everything is fine
@@ -368,10 +376,32 @@ void AudioManager::populateAlbumCover(std::shared_ptr<AudioSource> source, FMOD_
         em::log::debug("Image data is url: {}", imageDataIsURL);
     geode::log::popNest();
 
+    // note lazysprite caches urls so doesnt need to go through our cache here
     if (imageDataIsURL) {
-        em::log::debug("Album cover is in URL format!");
+        em::log::debug("Album cover is in URL format, loading LazySprite on main thread...");
+        auto copy = std::string((const char*)imageData);
+        geode::Loader::get()->queueInMainThread([source, copy] {
+            auto lazySprite = geode::LazySprite::create({0.f, 0.f}, false);
+            lazySprite->setLoadCallback([lazySprite, source](geode::Result<> res) {
+                source->m_albumCover = lazySprite->getTexture();
+            });
+            lazySprite->loadFromUrl(copy);
+        });
         return;
     }
+
+    unsigned int length = tag.datalen - i - 1; // minus one for null terminator
+
+    auto hash = em::utils::crc32((const uint8_t*)imageData, length, 0);
+    if (m_textureCache.contains(hash)) {
+        // cool 
+        em::log::debug("Found in cache!! ({})", hash);
+        source->m_albumCover = m_textureCache[hash];
+        return;
+    }
+
+    // not in cache, create cctexture2d
+    em::log::debug("Not found in cache! ({})", hash);
 
     // if there is no image/ prefix, image/ is implied - add it
     if (mimeType.find("image/") != 0) { mimeType = "image/" + mimeType; }
@@ -383,9 +413,10 @@ void AudioManager::populateAlbumCover(std::shared_ptr<AudioSource> source, FMOD_
         return;
     }
 
-    // finally read it??
-    int length = tag.datalen - i - 1; // minus one for null terminator
     auto image = new cocos2d::CCImage;
+    auto texture = new cocos2d::CCTexture2D;
+    m_textureCache[hash] = texture;
+
     // this ignores the last four params if type is a png
     if (!image->initWithImageData(imageData, length, format, 0, 0, 0, 0)) {
         em::log::warn("Error creating CCImage from image data for album cover of {}!", source->m_name);
@@ -394,8 +425,7 @@ void AudioManager::populateAlbumCover(std::shared_ptr<AudioSource> source, FMOD_
     }
 
     em::log::debug("CCImage created, queue cctexture in main thread...");
-    geode::Loader::get()->queueInMainThread([source, image] {
-        auto texture = new cocos2d::CCTexture2D;
+    geode::Loader::get()->queueInMainThread([texture, source, image, this, hash] {
         if (!texture->initWithImage(image)) {
             em::log::warn("Error creating CCTexture2D from CCImage for album cover of {}!", source->m_name);
             delete texture;
@@ -405,14 +435,14 @@ void AudioManager::populateAlbumCover(std::shared_ptr<AudioSource> source, FMOD_
 
         image->release();
 
-        em::log::debug("Album cover cctexture loaded for {}!", source->m_name);
         source->m_albumCover = texture;
+        em::log::debug("Album cover cctexture loaded for {}!", source->m_name);
     });
 }
 
 std::string AudioManager::figureOutFallbackName(std::filesystem::path path) {
     // stem is filename without the extension
-    return filterNameThruRegex(path.stem().string());
+    return filterNameThruRegex(geode::utils::string::pathToString(path.stem()));
 }
 
 std::string AudioManager::filterNameThruRegex(std::string songName) {
@@ -565,6 +595,12 @@ void AudioManager::update(float dt) {
     m_channel->isPlaying(&channelIsPlaying);
     if (!channelIsPlaying && shouldSongBePlaying()) {
         em::log::debug("channel isnt playing but should be, song ended?");
+        nextSong();
+    }
+
+    if (getCurrentSongPosition() > getCurrentSongLength()) {
+        em::log::warn("Position > length but channel not finished?");
+        em::log::debug("Skipping to next song");
         nextSong();
     }
 
@@ -746,12 +782,12 @@ void AudioManager::checkSongPreload() {
 void AudioManager::onCloseGDWindow() {
     em::log::debug("GD window closed, stop music");
     exitEditor();
-    // will cause all songs to be deleted and their album covers (caused an
-    // opengl memory leak before)
-    // not like it really matters though because the game is about to close
-    // also like a half dozen or so textures still dont get freed and I dont
-    // know why but whatever I guess i dont even need to do this
+
     m_songs.clear();
+
+    for (auto [hash, texture] : m_textureCache) {
+        texture->release();
+    }
 
     // there's a chance an extra frame gets rendered and SongInfoPopup crashes
     if (cocos2d::CCScene::get()) {

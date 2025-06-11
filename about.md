@@ -13,9 +13,3 @@ This just adds music to the editor, which pauses when playtesting and shuffles t
 
 
 This mod has Rift label support! Use `{currentEditorSong}`, `{currentEditorSongArtist}`, `{editorSongDuration}` and `{editorSongTimestamp}` in your Eclipse Discord RPC or labels today!
-
-If your game crashes on startup as a result of installing this mod, **please** ensure that it is not because of an installed song before sending a bug report! Common pitfalls (*especially* so on Windows, less so on android):
-- Songs with non latin characters (A-z), numbers, spaces or - and _ in the song title
-- Songs with non ascii characters in the metadata
-- Songs with metadata not formatted as UTF-8
-- Renamed mp4 files (though if your music is of an obscure format and it is certainly an audio file, try renaming to an mp3 to force the mod to attempt to load it!)

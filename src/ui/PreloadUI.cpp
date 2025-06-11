@@ -20,7 +20,8 @@ bool PreloadUI::init() {
 
     setContentSize({230, 55});
     setAnchorPoint({0.5f, 0.5f});
-    setCascadeOpacityEnabled(true);    
+    setCascadeOpacityEnabled(true);
+    setZOrder(cocos2d::CCScene::get()->getHighestChildZ() + 1);
 
     auto bg = cocos2d::extension::CCScale9Sprite::create("GJ_square01.png");
     bg->setID("background");

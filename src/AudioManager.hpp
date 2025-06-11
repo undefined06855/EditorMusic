@@ -9,7 +9,7 @@ struct LoadIssue {
     FMOD_RESULT m_type;
 };
 
-class AudioManager {
+class AudioManager : cocos2d::CCObject {
     AudioManager();
 public:
     static AudioManager& get();
@@ -45,6 +45,8 @@ public:
 
     std::mt19937 m_gen;
     std::uniform_int_distribution<int> m_randomSongGenerator;
+
+    std::unordered_map<uint32_t, cocos2d::CCTexture2D*> m_textureCache;
 
     void populateSongs();
     void populateSongsThread();

@@ -54,6 +54,7 @@ $on_mod(Loaded) {
 
 //     void onStats(cocos2d::CCObject*) {
 //         std::array<std::string, 6> songNames = {
+// @geode-ignore(unknown-resource)
 //             "robert topala.mp3",
 //             "Back on Track",
 //             "idk song name",

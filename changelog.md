@@ -1,23 +1,27 @@
 # EditorMusic
+## v2.2.0
+- Fixed many, many issues with song paths that contain non-ascii characters - they should no longer be an issue!
+- Added caching to album covers to reduce memory usage
+- Fixed issues with the loading UI not showing above all layers
+- Fixed issues where the song would not end after it should have
 ## v2.1.15
 - iOS support!
-- Fix issues with the pause keybind not updating the button in the current song popup
-- Fix issues with the current song popup not closing if you closed the editor pause menu
-- Fix issues with songs in history not being preloaded when they should
+- Fixed issues with the pause keybind not updating the button in the current song popup
+- Fixed issues with the current song popup not closing if you closed the editor pause menu
+- Fixed issues with songs in history not being preloaded when they should
 - Add popup to show any songs that had errors while loading
 ## v2.1.14
-- Fix songs longer than one hour or take up more space than memory available on the system
-- Make reading metadata more consistent and less crashable when filtering invalid characters
-- Include more information in crashlogs and add more error checking
+- Fixed songs longer than one hour or take up more space than memory available on the system
+- Made reading metadata more consistent and less crashable when filtering invalid characters
+- Included more information in crashlogs and add more error checking
 ## v2.1.13
-- Format multiple artists correctly
-- Fix hardware buttons not working and music not closing when game is closed
+- Formatted multiple artists correctly
+- Fixed hardware buttons not working and music not closing when game is closed
 - Refixed other crash issues when closing the game with the song popup open
 ## v2.1.12
 - Fixed issues with changing between fullscreen and windowed
 - Fixed other crash issues when closing the game with the song popup open
-- Mod preview images!
-- Contemplating bumping a version number other than patch...
+- Added mod preview images!
 ## v2.1.11
 - Fixed issues that caused songs to start playing if it's meant to be paused on levels that take a long time to load
 ## v2.1.10
@@ -47,13 +51,13 @@
 ## v2.1.1
 - MacOS support! (Erymanthus)
 ## v2.1.0
-- Rearrange order of some settings
-- Fix crash with one song coming from a level (#27)
+- Rearranged order of some settings
+- Fixed crash with one song coming from a level (#27)
 - Added ability to round corners of the album cover
 - Added ability to refresh song list from mod settings
 - Saved paused state between sessions
 ## v2.0.0
-- Complete rewrite of the entire mod from the ground up!
+- Completed rewrite of the entire mod from the ground up!
 - Redid and improved UI
 - Added loading album art
 - Improved reliability to reduce crashes
