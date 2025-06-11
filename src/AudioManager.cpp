@@ -598,13 +598,13 @@ void AudioManager::update(float dt) {
         nextSong();
     }
 
-    if (getCurrentSongPosition() > getCurrentSongLength()) {
-        em::log::warn("Position > length but channel not finished?");
-        em::log::debug("Skipping to next song");
-        nextSong();
-    }
-
     if (m_isInEditor) {
+        if (getCurrentSongPosition() > getCurrentSongLength()) {
+            em::log::warn("Position > length but channel not finished?");
+            em::log::debug("Skipping to next song");
+            nextSong();
+        }
+
         int persistedNodes = geode::SceneManager::get()->getPersistedNodes().size();
         int lowPassStrength = cocos2d::CCScene::get()->getChildrenCount() - persistedNodes - 1;
         if (LevelEditorLayer::get()->getChildByID("EditorPauseLayer")) lowPassStrength++;

@@ -1,4 +1,6 @@
 # EditorMusic
+## v2.2.1
+- Fixed the mod instantly crashing on startup
 ## v2.2.0
 - Fixed many, many issues with song paths that contain non-ascii characters - they should no longer be an issue!
 - Added caching to album covers to reduce memory usage
