@@ -83,7 +83,7 @@
 			"name": "Extra songs path",
 			"type": "folder",
 			"description": "If this is set to a path, EditorMusic will take songs from here as well as the config folder.",
-			"default": ""
+			"default": "(none)"
 		},
 		"dev-title": {
 			"type": "title",
