@@ -15,6 +15,7 @@ bool HookedLevelEditorLayer::init(GJGameLevel* p0, bool p1) {
     fields->m_songPopupLabel->setID("song-popup-label"_spr);
     fields->m_songPopupLabel->setScale(.35f);
     fields->m_songPopupLabel->setZOrder(120);
+    fields->m_songPopupLabel->setOpacity(0);
     fields->m_songPopupLabel->setPosition({
         cocos2d::CCScene::get()->getContentWidth() / 2.f,
         cocos2d::CCScene::get()->getContentHeight()

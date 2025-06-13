@@ -1,4 +1,6 @@
 # EditorMusic
+## v2.2.2
+- Fixed the next song label being visible in the editor always if you had zero songs
 ## v2.2.1
 - Fixed the mod instantly crashing on startup
 ## v2.2.0
