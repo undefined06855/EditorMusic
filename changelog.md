@@ -6,6 +6,7 @@
 - Added caching to album covers to reduce memory usage
 - Fixed issues with the loading UI not showing above all layers
 - Fixed issues where the song would not end after it should have
+- Fixed issues relating to incorrect song lengths
 ## v2.1.15
 - iOS support!
 - Fixed issues with the pause keybind not updating the button in the current song popup
