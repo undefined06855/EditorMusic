@@ -382,8 +382,10 @@ void AudioManager::populateAlbumCover(std::shared_ptr<AudioSource> source, FMOD_
         auto copy = std::string((const char*)imageData);
         geode::Loader::get()->queueInMainThread([source, copy] {
             auto lazySprite = geode::LazySprite::create({0.f, 0.f}, false);
+	        lazySprite->retain();
             lazySprite->setLoadCallback([lazySprite, source](geode::Result<> res) {
                 source->m_albumCover = lazySprite->getTexture();
+                lazySprite->release();
             });
             lazySprite->loadFromUrl(copy);
         });
