@@ -591,18 +591,18 @@ void AudioManager::update(float dt) {
     }
     for (auto* easer : easersToRemove) { m_easers.erase(std::remove(m_easers.begin(), m_easers.end(), *easer), m_easers.end()); }
 
-    bool channelIsPlaying = false;
-    m_channel->isPlaying(&channelIsPlaying);
-    if (!channelIsPlaying && shouldSongBePlaying()) {
-        em::log::debug("channel isnt playing but should be, song ended?");
-        nextSong();
-    }
-
     if (shouldSongBePlaying()) {
         if (getCurrentSongPosition() > getCurrentSongLength()) {
             em::log::warn("Position > length but channel not finished?");
             em::log::debug("Skipping to next song");
             nextSong();
+        } else {
+            bool channelIsPlaying = false;
+            m_channel->isPlaying(&channelIsPlaying);
+            if (!channelIsPlaying) {
+                em::log::debug("channel isnt playing but should be, song ended?");
+                nextSong();
+            }
         }
     }
 
@@ -622,6 +622,7 @@ void AudioManager::update(float dt) {
     
     // our channel id is more than likely one, but there is a certain scenario where
     // it is two, but nobody will ever find it and only I know how so it should be fine
+    // me from 4 months later: i forgot :fire:
     m_isEditorAudioPlaying = FMODAudioEngine::sharedEngine()->isMusicPlaying(0) || FMODAudioEngine::sharedEngine()->isMusicPlaying(2);
     m_channel->setPaused(!shouldSongBePlaying());
     m_channel->setVolume(geode::Mod::get()->getSettingValue<double>("volume"));
@@ -650,8 +651,8 @@ void AudioManager::startPlayingCurrentSong() {
     // now has loaded audio at this point
     m_playCurrentSongQueuedForLoad = false;
     auto ret = m_system->playSound(getCurrentSong()->m_sound, nullptr, m_isPaused, &m_channel); 
-    updateLowPassFilter();
     if (ret != FMOD_OK) em::log::warn("FMOD error (0): {} (0x{:02X})", FMOD_ErrorString(ret), (int)ret);
+    updateLowPassFilter();
     em::log::debug("Music time!");
 
     em::rift_labels::set(em::rift_labels::g_labelCurrentSong, getCurrentSong()->m_name);
@@ -734,7 +735,6 @@ void AudioManager::exitEditor() {
         m_channel->stop(); // will cause it to be freed
         m_channel = nullptr;
     }
-
 }
 
 void AudioManager::checkSongPreload() {
@@ -765,9 +765,9 @@ void AudioManager::checkSongPreload() {
     for (auto song : m_queue) {
         bool shouldBeLoaded = \
             m_queue.size() < 3
-         || song == m_queue[m_queue.size() - 1]
-         || song == m_queue[m_queue.size() - 2]
-         || song == m_queue[m_queue.size() - 3];
+         || song == m_queue[0]
+         || song == m_queue[1]
+         || song == m_queue[2];
 
         if (song->m_hasLoadedAudio && !shouldBeLoaded) {
             // has loaded audio but shouldnt
