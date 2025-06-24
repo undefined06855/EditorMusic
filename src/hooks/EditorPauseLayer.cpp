@@ -70,5 +70,19 @@ bool HookedEditorPauseLayer::init(LevelEditorLayer* editor) {
         lengthLabel->limitLabelWidth(175.f, 0.5f, .1f);
     }
 
+    
+    // move label from song stopped at
+    // id isnt prefixed with modid but checking both just in case it does in the
+    // future
+    
+    auto node = getChildByID("song-stopped-at");
+    if (!node) {
+        node = getChildByID("aceinetx.song_stopped_at/song-stopped-at");
+    }
+
+    if (node) {
+        node->setPositionY(269.f);
+    }
+
     return true;
 }

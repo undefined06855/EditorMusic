@@ -1,4 +1,6 @@
 # EditorMusic
+## v2.2.4
+- Improved compatibility with Song Stopped At
 ## v2.2.3
 - Fixed url album covers to ensure they don't crash
 ## v2.2.2
