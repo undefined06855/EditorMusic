@@ -2,7 +2,7 @@
 #include "fmod_common.h"
 #include "ui/SongInfoPopup.hpp"
 #include <Geode/fmod/fmod_errors.h>
-#include "simdutf.h"
+#include <simdutf.h>
 #include "utils.hpp"
 #include "log.hpp"
 #include "eclipse.hpp"
