@@ -1,4 +1,6 @@
 # EditorMusic
+## v2.2.5
+- Fixed a crash that occured if you entered the editor before all your songs were loaded
 ## v2.2.4
 - Improved compatibility with Song Stopped At
 ## v2.2.3

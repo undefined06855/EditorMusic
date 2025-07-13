@@ -717,7 +717,7 @@ void AudioManager::updateLowPassFilter() {
 
 void AudioManager::enterEditor() {
     m_isInEditor = true;
-    if (m_songs.empty()) return;
+    if (m_songs.empty() || m_isQueueBeingPopulated) return;
 
     m_isPaused = geode::Mod::get()->getSavedValue<bool>("is-paused", false);
 
