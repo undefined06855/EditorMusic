@@ -348,7 +348,7 @@ void AudioManager::populateAlbumCover(std::shared_ptr<AudioSource> source, FMOD_
     if (!data) return; // idk sometimes happens
 
     char textEncoding = data[i++];
-    geode::ZStringView mimeType = geode::ZStringView((const char*)(data + i)); i += mimeType.length();
+    geode::ZStringView mimeType = geode::ZStringView((const char*)(data + i)); i += mimeType.length(); // ???? not sure how this ever worked if the null byte gets missed
     char pictureType = data[i++];
     geode::ZStringView description;
     if (textEncoding == 0x01 || textEncoding == 0x02) {
