@@ -12,7 +12,7 @@ AudioManager& AudioManager::get() {
     return instance;
 }
 
-AudioManager::AudioManager() 
+AudioManager::AudioManager()
     : m_shownLoadIssues(false)
     , m_loadIssues({})
 
@@ -25,23 +25,23 @@ AudioManager::AudioManager()
     , m_queueLength(50)
     , m_historyLength(25)
     , m_songs({})
-    
+
     , m_isInEditor(false)
     , m_isEditorAudioPlaying(false)
     , m_isPaused(false)
     , m_isQueueBeingPopulated(false)
-    
+
     , m_playCurrentSongQueuedForLoad(false)
-    
+
     , m_lowPassStrength(0)
     , m_lowPassEasedCutoff(0)
     , m_lowPassFilter(nullptr)
-    
+
     , m_easers({})
-    
+
     , m_gen(std::random_device{}())
     , m_randomSongGenerator(0, 0)
-    
+
     , m_textureCache({}) {}
 
 void AudioManager::init() {
@@ -142,7 +142,7 @@ void AudioManager::populateSongsFromPath(std::filesystem::path path) {
 }
 
 bool AudioManager::isValidAudioFile(std::filesystem::path path) {
-    static const std::array<std::string, 20> validFiles = {
+    static const std::array<geode::ZStringView, 20> validFiles = {
         ".mp3", ".wav", ".ogg", ".flac", // certain
         // rest are according to wikipedia and im more than 50% convinced by
         ".aiff", ".aif", ".aifc",
@@ -196,7 +196,7 @@ bool AudioManager::populateAudioSourceInfo(std::shared_ptr<AudioSource> source) 
     }
 
     auto extension =  geode::utils::string::pathToString(source->m_path.extension());
-    std::array<std::string, 4> supportedMetadataFormats = { ".mp3", ".wav", ".ogg", ".flac" };
+    std::array<geode::ZStringView, 4> supportedMetadataFormats = { ".mp3", ".wav", ".ogg", ".flac" };
     if (std::find(supportedMetadataFormats.begin(), supportedMetadataFormats.end(), extension) == supportedMetadataFormats.end()) {
         // not supported for getting metadata
         source->m_name = figureOutFallbackName(source->m_path);
@@ -210,14 +210,14 @@ bool AudioManager::populateAudioSourceInfo(std::shared_ptr<AudioSource> source) 
     }
 
     // figure out metadata for name and if it exists
-    std::map<std::string, std::string> nameExtensionMap = {
+    std::map<geode::ZStringView, geode::ZStringView> nameExtensionMap = {
         { ".mp3", "TIT2" },
         { ".wav", "INAM" },
         { ".ogg", "TITLE" },
         { ".flac", "TITLE" }
     };
     FMOD_TAG nameTag;
-    std::string nameTagString = nameExtensionMap[extension];
+    geode::ZStringView nameTagString = nameExtensionMap[extension];
     if (sound->getTag(nameTagString.c_str(), 0, &nameTag) == FMOD_ERR_TAGNOTFOUND) {
         em::log::debug("Using fallback, title not found");
         source->m_name = figureOutFallbackName(source->m_path);
@@ -228,14 +228,14 @@ bool AudioManager::populateAudioSourceInfo(std::shared_ptr<AudioSource> source) 
     }
 
     // figure out metadata for artist and if it exists
-    std::map<std::string, std::string> artistExtensionMap = {
+    std::map<geode::ZStringView, geode::ZStringView> artistExtensionMap = {
         { ".mp3", "TPE1" },
         { ".wav", "IART" },
         { ".ogg", "ARTIST" },
         { ".flac", "ARTIST" }
     };
     FMOD_TAG artistTag;
-    std::string artistTagString = artistExtensionMap[extension];
+    geode::ZStringView artistTagString = artistExtensionMap[extension];
     if (sound->getTag(artistTagString.c_str(), 0, &artistTag) == FMOD_ERR_TAGNOTFOUND) {
         em::log::debug("Using fallback, artist not found");
         source->m_artist = "Unknown";
@@ -325,7 +325,7 @@ std::string AudioManager::populateStringTag(FMOD_TAG tag, bool useTitleFallback,
             em::log::debug("Tag is in utf8");
             return filterNameThruRegex(std::string((char*)tag.data));
         }
-        
+
         default: {
             // uhhhh
             em::log::debug("Tag not in known format, using fallback");
@@ -348,14 +348,14 @@ void AudioManager::populateAlbumCover(std::shared_ptr<AudioSource> source, FMOD_
     if (!data) return; // idk sometimes happens
 
     char textEncoding = data[i++];
-    std::string mimeType = std::string((const char*)(data + i)); i += mimeType.length();
+    geode::ZStringView mimeType = geode::ZStringView((const char*)(data + i)); i += mimeType.length();
     char pictureType = data[i++];
-    std::string description;
+    geode::ZStringView description;
     if (textEncoding == 0x01 || textEncoding == 0x02) {
         description = "(not read)";
         i += std::char_traits<char16_t>::length((const char16_t*)(data + i)) * 2 + 2;
     } else {
-        description = std::string((const char*)(data + i));
+        description = geode::ZStringView((const char*)(data + i));
         i += description.length();
     }
     if (description.length() == 0) i++; // fixes some of my album covers
@@ -379,7 +379,7 @@ void AudioManager::populateAlbumCover(std::shared_ptr<AudioSource> source, FMOD_
     // note lazysprite caches urls so doesnt need to go through our cache here
     if (imageDataIsURL) {
         em::log::debug("Album cover is in URL format, loading LazySprite on main thread...");
-        auto copy = std::string((const char*)imageData);
+        auto copy = geode::ZStringView((const char*)imageData);
         geode::Loader::get()->queueInMainThread([source, copy] {
             auto lazySprite = geode::LazySprite::create({0.f, 0.f}, false);
 	        lazySprite->retain();
@@ -396,7 +396,7 @@ void AudioManager::populateAlbumCover(std::shared_ptr<AudioSource> source, FMOD_
 
     auto hash = em::utils::crc32((const uint8_t*)imageData, length, 0);
     if (m_textureCache.contains(hash)) {
-        // cool 
+        // cool
         em::log::debug("Found in cache!! ({})", hash);
         source->m_albumCover = m_textureCache[hash];
         return;
@@ -406,7 +406,7 @@ void AudioManager::populateAlbumCover(std::shared_ptr<AudioSource> source, FMOD_
     em::log::debug("Not found in cache! ({})", hash);
 
     // if there is no image/ prefix, image/ is implied - add it
-    if (mimeType.find("image/") != 0) { mimeType = "image/" + mimeType; }
+    if (std::string_view(mimeType).find("image/") != 0) { mimeType = "image/" + mimeType; }
 
     auto format = em::utils::mimeTypeToFormat(mimeType);
 
@@ -447,7 +447,7 @@ std::string AudioManager::figureOutFallbackName(std::filesystem::path path) {
     return filterNameThruRegex(geode::utils::string::pathToString(path.stem()));
 }
 
-std::string AudioManager::filterNameThruRegex(std::string songName) {
+std::string AudioManager::filterNameThruRegex(geode::ZStringView songName) {
     // used to be regex of [^ -~•]+ which worked but crashed more often than not
     // also dropped bullet point support because i think only utf8 strings get
     // passed in to this function so bullet points will be stripped by simdutf
@@ -466,7 +466,7 @@ std::string AudioManager::filterNameThruRegex(std::string songName) {
     return ret;
 }
 
-std::string AudioManager::formatArtistString(std::string artists) {
+std::string AudioManager::formatArtistString(geode::ZStringView artists) {
     // tried using regex and being lazy but doesnt support (?<!\\)/ or something
     // well whatever this works probably better
     std::string result = "";
@@ -609,7 +609,7 @@ void AudioManager::update(float dt) {
     }
 
     if (m_isInEditor) {
-        int persistedNodes = geode::SceneManager::get()->getPersistedNodes().size();
+        int persistedNodes = geode::OverlayManager::get()->getChildrenCount();
         int lowPassStrength = cocos2d::CCScene::get()->getChildrenCount() - persistedNodes - 1;
         if (LevelEditorLayer::get()->getChildByID("EditorPauseLayer")) lowPassStrength++;
         if (cocos2d::CCScene::get()->getChildByID("thesillydoggo.qolmod/QOLModButton")) lowPassStrength--;
@@ -621,7 +621,7 @@ void AudioManager::update(float dt) {
             updateLowPassFilter();
         }
     }
-    
+
     // our channel id is more than likely one, but there is a certain scenario where
     // it is two, but nobody will ever find it and only I know how so it should be fine
     // me from 4 months later: i forgot :fire:
@@ -652,7 +652,7 @@ void AudioManager::startPlayingCurrentSong() {
 
     // now has loaded audio at this point
     m_playCurrentSongQueuedForLoad = false;
-    auto ret = m_system->playSound(getCurrentSong()->m_sound, nullptr, m_isPaused, &m_channel); 
+    auto ret = m_system->playSound(getCurrentSong()->m_sound, nullptr, m_isPaused, &m_channel);
     if (ret != FMOD_OK) em::log::warn("FMOD error (0): {} (0x{:02X})", FMOD_ErrorString(ret), (int)ret);
     updateLowPassFilter();
     em::log::debug("Music time!");

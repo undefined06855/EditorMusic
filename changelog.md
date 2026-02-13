@@ -1,4 +1,6 @@
 # EditorMusic
+## v2.2.6
+- Geode v5 and GD 2.2081 support!
 ## v2.2.5
 - Fixed a crash that occured if you entered the editor before all your songs were loaded
 ## v2.2.4

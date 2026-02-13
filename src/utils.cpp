@@ -4,7 +4,7 @@ namespace em::utils {
 
 std::string formatTime(unsigned int ms) {
     int rawSeconds = ms / 1000;
-    
+
     int minutes = (rawSeconds / 60) % 60;
     int hours = (rawSeconds / 60) / 60;
     int seconds = rawSeconds % 60;
@@ -14,8 +14,8 @@ std::string formatTime(unsigned int ms) {
     return fmt::format("{:02}:{:02}:{:02}", hours, minutes, seconds);
 }
 
-cocos2d::CCImage::EImageFormat mimeTypeToFormat(std::string mimeType) {
-    std::unordered_map<std::string, cocos2d::CCImage::EImageFormat> formatToMap = {
+cocos2d::CCImage::EImageFormat mimeTypeToFormat(geode::ZStringView mimeType) {
+    static const std::unordered_map<std::string_view, cocos2d::CCImage::EImageFormat> formatToMap = {
         { "image/png", cocos2d::CCImage::EImageFormat::kFmtPng },
         { "image/jpg", cocos2d::CCImage::EImageFormat::kFmtJpg },
         { "image/jpeg", cocos2d::CCImage::EImageFormat::kFmtJpg },

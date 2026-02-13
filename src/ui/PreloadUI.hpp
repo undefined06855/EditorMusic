@@ -12,10 +12,10 @@ public:
     cocos2d::CCLabelBMFont* m_progressLabel;
     cocos2d::CCLabelBMFont* m_subtitleLabel;
     ProgressBar* m_progressBar;
-    
+
     cocos2d::CCPoint m_animUpperPos;
     cocos2d::CCPoint m_animLowerPos;
 
-    void increment(std::string lastSongLoadedName);
+    void increment(geode::ZStringView lastSongLoadedName);
     void runCompleteAnimationAndRemove();
 };

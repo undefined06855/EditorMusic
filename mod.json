@@ -1,19 +1,19 @@
 {
-	"geode": "4.6.1",
+	"geode": "5.0.0-alpha.2",
 	"gd": {
-		"win": "2.2074",
-		"mac": "2.2074",
-		"android": "2.2074",
-		"ios": "2.2074"
+		"win": "2.2081",
+		"mac": "2.2081",
+		"android": "2.2081",
+		"ios": "2.2081"
 	},
 
-	"version": "v2.2.5",
+	"version": "v2.2.6",
 	"id": "undefined0.editormusic",
 	"name": "EditorMusic",
 	"developer": "undefined0",
 	"description": "Music in your editor, what's not to like?",
 	"tags": [ "editor", "music", "enhancement" ],
-	
+
 	"early-load": true,
 
 	"dependencies": {
@@ -22,9 +22,10 @@
 			"version": "1.10.2",
 			"platforms": [ "win", "android32", "android64", "mac" ],
 			"importance": "required"
-		}
+		},
+		"eclipse.eclipse-menu": "v1.7.0"
 	},
-	
+
 	"links": {
 		"source": "https://github.com/undefined06855/EditorMusic"
 	},

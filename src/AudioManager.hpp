@@ -56,8 +56,8 @@ public:
     std::string populateStringTag(FMOD_TAG tag, bool useTitleFallback, std::shared_ptr<AudioSource> sourceForFallback = nullptr);
     void populateAlbumCover(std::shared_ptr<AudioSource> source, FMOD_TAG tag);
     std::string figureOutFallbackName(std::filesystem::path path);
-    std::string filterNameThruRegex(std::string songName);
-    std::string formatArtistString(std::string artists);
+    std::string filterNameThruRegex(geode::ZStringView songName);
+    std::string formatArtistString(geode::ZStringView artists);
     bool isValidAudioFile(std::filesystem::path path);
 
     void checkQueueLength();

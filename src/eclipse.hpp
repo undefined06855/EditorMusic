@@ -1,5 +1,5 @@
 #pragma once
-#include "external/labels.hpp"
+#include <eclipse.eclipse-menu/include/labels.hpp>
 
 namespace em::rift_labels {
 
@@ -12,7 +12,7 @@ inline const std::string g_labelEditorSongTimestamp = "editorSongTimestamp";
 inline bool g_isEclipseLoaded = false;
 
 template <eclipse::label::SupportedType T>
-inline void set(std::string labelName, T value) {
+inline void set(geode::ZStringView labelName, T value) {
     if (!g_isEclipseLoaded) return;
     eclipse::label::setVariable(labelName, value);
 }

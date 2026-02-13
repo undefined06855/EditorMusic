@@ -23,7 +23,7 @@ bool PreloadUI::init() {
     setCascadeOpacityEnabled(true);
     setZOrder(cocos2d::CCScene::get()->getHighestChildZ() + 1);
 
-    auto bg = cocos2d::extension::CCScale9Sprite::create("GJ_square01.png");
+    auto bg = geode::NineSlice::create("GJ_square01.png");
     bg->setID("background");
     bg->setContentSize(getContentSize());
     addChildAtPosition(bg, geode::Anchor::Center);
@@ -59,7 +59,7 @@ bool PreloadUI::init() {
 void PreloadUI::addToSceneAndAnimate() {
     auto scene = cocos2d::CCScene::get();
     scene->addChild(this);
-    geode::SceneManager::get()->keepAcrossScenes(this);
+    geode::OverlayManager::get()->addChild(this);
 
     setPosition(m_animUpperPos);
     runAction(
@@ -70,7 +70,7 @@ void PreloadUI::addToSceneAndAnimate() {
     );
 }
 
-void PreloadUI::increment(std::string lastSongLoadedName) {
+void PreloadUI::increment(geode::ZStringView lastSongLoadedName) {
     m_songsLoaded++;
     m_progressLabel->setString(lastSongLoadedName.c_str());
     m_progressLabel->limitLabelWidth(190.f, .5f, 0.1f);
@@ -89,7 +89,7 @@ void PreloadUI::runCompleteAnimationAndRemove() {
         m_subtitleLabel->setString("");
     }
 
-    geode::SceneManager::get()->forget(this);
+    geode::OverlayManager::get()->removeChild(this);
 
     if (!cocos2d::CCScene::get()) {
         removeFromParent();

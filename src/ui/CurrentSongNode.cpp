@@ -30,7 +30,7 @@ bool CurrentSongNode::init() {
     m_mainLayer->setContentSize(getContentSize());
     addChildAtPosition(m_mainLayer, geode::Anchor::Bottom);
 
-    auto bg = cocos2d::extension::CCScale9Sprite::create("GJ_square01.png");
+    auto bg = geode::NineSlice::create("GJ_square01.png");
     bg->setID("background");
     bg->setContentSize({ getContentWidth(), getContentHeight() * 2.f});
     m_mainLayer->addChildAtPosition(bg, geode::Anchor::Top);

@@ -5,24 +5,24 @@
 #include "log.hpp"
 
 $on_mod(Loaded) {
-    geode::listenForSettingChanges("low-pass", [](bool value) {
+    geode::listenForSettingChanges<bool>("low-pass", [](bool value) {
         auto am = AudioManager::get();
 
         if (value) am.updateLowPassFilter();
         else       am.m_channel->removeDSP(am.m_lowPassFilter);
     });
 
-    geode::listenForSettingChanges("player-format", [](std::string value) {
+    geode::listenForSettingChanges<std::string>("player-format", [](std::string value) {
         auto popup = SongInfoPopup::get();
         if (popup) popup->updateCustomizableUI();
     });
 
-    geode::listenForSettingChanges("round-corners", [](std::string value) {
+    geode::listenForSettingChanges<std::string>("round-corners", [](std::string value) {
         auto popup = SongInfoPopup::get();
         if (popup) popup->updateCustomizableUI();
     });
 
-    geode::listenForSettingChanges("extra-songs-path", [](std::filesystem::path value) {
+    geode::listenForSettingChanges<std::string>("extra-songs-path", [](std::filesystem::path value) {
         AudioManager::get().populateSongs();
     });
 

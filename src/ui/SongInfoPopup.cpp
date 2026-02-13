@@ -9,7 +9,7 @@
 
 SongInfoPopup* SongInfoPopup::create() {
     auto ret = new SongInfoPopup;
-    if (ret->initAnchored(360.f, 140.f)) {
+    if (ret->init()) {
         ret->autorelease();
         return ret;
     }
@@ -22,7 +22,9 @@ SongInfoPopup* SongInfoPopup::get() {
     return cocos2d::CCScene::get()->getChildByType<SongInfoPopup>(0);
 }
 
-bool SongInfoPopup::setup() {
+bool SongInfoPopup::init() {
+    if (!Popup::init({ 360.f, 140.f })) return false;
+
     setTitle("Current song:");
     setID("SongInfoPopup"_spr);
 
@@ -183,7 +185,7 @@ void SongInfoPopup::updateCustomizableUI() {
     if (m_isInStrippedBackMode) return;
     if (m_currentSongLabel) m_currentSongLabel->removeFromParent();
     if (m_currentSongArtistLabel) m_currentSongArtistLabel->removeFromParent();
-    
+
     m_currentSongLabel = cocos2d::CCLabelBMFont::create("...", "bigFont.fnt");
     m_currentSongLabel->setID("current-song-label");
 
@@ -272,7 +274,7 @@ void SongInfoPopup::updateAlbumCover() {
     auto clipSetting = geode::Mod::get()->getSettingValue<std::string>("round-corners");
     em::log::debug("clipSetting: {}", clipSetting);
     if (clipSetting != "none") {
-        m_albumCoverClipSprite = cocos2d::extension::CCScale9Sprite::create(clipSetting == "round" ? "album-round.png"_spr : "album-round-overlay.png"_spr);
+        m_albumCoverClipSprite = geode::NineSlice::create(clipSetting == "round" ? "album-round.png"_spr : "album-round-overlay.png"_spr);
         m_albumCoverClipSprite->setZOrder(-1);
         m_albumCoverClipSprite->setContentSize(m_albumCoverSprite->getScaledContentSize());
         if (em::utils::isMusicPlayerCentered()) {
@@ -287,7 +289,7 @@ void SongInfoPopup::updateAlbumCover() {
 }
 
 cocos2d::CCSprite* SongInfoPopup::getRandomSpriteForNoSongPopup() {
-    std::array<std::string, 7> potentialSpriteNames = {
+    std::array<geode::ZStringView, 7> potentialSpriteNames = {
         "dialogIcon_029.png", // confused
         "dialogIcon_028.png", // robtop
         "dialogIcon_034.png", // eyes
