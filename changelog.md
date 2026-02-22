@@ -1,10 +1,7 @@
 # EditorMusic
-## v2.2.7
-- Geode v5 beta 4 support!
-- Fix keybinds and stuff
-- Replace all tabs with spaces
 ## v2.2.6
-- Geode v5 and GD 2.2081 support!
+- Added Geode v5 and GD 2.2081 support!
+- Replaced all tabs with spaces
 ## v2.2.5
 - Fixed a crash that occured if you entered the editor before all your songs were loaded
 ## v2.2.4
