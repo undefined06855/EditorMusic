@@ -25,7 +25,7 @@ endif()
 add_subdirectory($ENV{GEODE_SDK} ${CMAKE_CURRENT_BINARY_DIR}/geode)
 
 set(SIMDUTF_TOOLS OFF)
-CPMAddPackage("gh:simdutf/simdutf@7.0.0")
+CPMAddPackage("gh:simdutf/simdutf@7.7.1")
 if (CMAKE_BUILD_TYPE STREQUAL "Debug" AND WIN32)
     target_compile_definitions(simdutf PRIVATE _ITERATOR_DEBUG_LEVEL=0)
 endif()

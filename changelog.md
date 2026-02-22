@@ -2,6 +2,7 @@
 ## v2.2.6
 - Added Geode v5 and GD 2.2081 support!
 - Replaced all tabs with spaces
+- Updated simdutf from 7.0.0 to 7.7.1
 ## v2.2.5
 - Fixed a crash that occured if you entered the editor before all your songs were loaded
 ## v2.2.4
