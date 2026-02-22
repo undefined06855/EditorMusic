@@ -142,18 +142,23 @@ void AudioManager::populateSongsFromPath(std::filesystem::path path) {
 }
 
 bool AudioManager::isValidAudioFile(std::filesystem::path path) {
+    // https://fmod.com/docs/2.02/api/core-api-sound.html#fmod_sound_type
     static const std::array<geode::ZStringView, 20> validFiles = {
-        ".mp3", ".wav", ".ogg", ".flac", // certain
-        // rest are according to wikipedia and im more than 50% convinced by
-        ".aiff", ".aif", ".aifc",
+        ".aiff", ".aif",
         ".asf", ".wma", ".wmv",
-        ".asx",
-        ".it", ".midi", ".mid",
-        ".m3u", ".m3u8",
-        ".mp2",
-        ".pls",
+        ".dls",
+        ".flac",
+        ".fsb",
+        ".it",
+        ".mid",
+        ".mod",
+        ".mp2", ".mp3", ".wav",
+        ".ogg",
+        // ".asx", ".pls", ".m3u", ".wax", // no audio info, just tags
+        ".raw",
         ".s3m",
-        ".wma"
+        ".wav",
+        ".xm",
     };
 
     return std::find(validFiles.begin(), validFiles.end(), path.extension()) != validFiles.end();
