@@ -15,7 +15,7 @@ void modifyWindowProc();
 
 class $modify(HookedGameManager, GameManager) {
     void reloadAll(bool switchingModes, bool toFullscreen, bool borderless, bool fix, bool unused);
-	void reloadAllStep5();
+    void reloadAllStep5();
 };
 
 }

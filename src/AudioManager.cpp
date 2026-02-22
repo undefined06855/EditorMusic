@@ -78,7 +78,7 @@ void AudioManager::populateSongsThread() {
 
     geode::Loader::get()->queueInMainThread([this] {
         m_preloadUI->runCompleteAnimationAndRemove();
-        m_preloadUI = nullptr;
+        // m_preloadUI = nullptr;
     });
 
     em::log::info("Finished populating songs!");
@@ -201,7 +201,7 @@ bool AudioManager::populateAudioSourceInfo(std::shared_ptr<AudioSource> source) 
         // not supported for getting metadata
         source->m_name = figureOutFallbackName(source->m_path);
         source->m_artist = "Unknown";
-	    sound->getLength(&source->m_length, FMOD_TIMEUNIT_MS);
+        sound->getLength(&source->m_length, FMOD_TIMEUNIT_MS);
 
         geode::log::popNest();
         em::log::info("Loaded song info for {}! (was not supported for metadata)", source->m_name);
@@ -210,7 +210,7 @@ bool AudioManager::populateAudioSourceInfo(std::shared_ptr<AudioSource> source) 
     }
 
     // figure out metadata for name and if it exists
-    static const std::map<geode::ZStringView, geode::ZStringView> nameExtensionMap = {
+    static std::map<geode::ZStringView, geode::ZStringView> nameExtensionMap = {
         { ".mp3", "TIT2" },
         { ".wav", "INAM" },
         { ".ogg", "TITLE" },
@@ -228,7 +228,7 @@ bool AudioManager::populateAudioSourceInfo(std::shared_ptr<AudioSource> source) 
     }
 
     // figure out metadata for artist and if it exists
-    static const std::map<geode::ZStringView, geode::ZStringView> artistExtensionMap = {
+    static std::map<geode::ZStringView, geode::ZStringView> artistExtensionMap = {
         { ".mp3", "TPE1" },
         { ".wav", "IART" },
         { ".ogg", "ARTIST" },
@@ -256,7 +256,7 @@ bool AudioManager::populateAudioSourceInfo(std::shared_ptr<AudioSource> source) 
     }
 
     // if anything added here make sure to add to early return
-	sound->getLength(&source->m_length, FMOD_TIMEUNIT_MS);
+    sound->getLength(&source->m_length, FMOD_TIMEUNIT_MS);
 
     geode::log::popNest();
     em::log::info("Loaded song info for {}!", source->m_name);
@@ -382,7 +382,7 @@ void AudioManager::populateAlbumCover(std::shared_ptr<AudioSource> source, FMOD_
         auto copy = geode::ZStringView((const char*)imageData);
         geode::Loader::get()->queueInMainThread([source, copy] {
             auto lazySprite = geode::LazySprite::create({0.f, 0.f}, false);
-	        lazySprite->retain();
+            lazySprite->retain();
             lazySprite->setLoadCallback([lazySprite, source](geode::Result<> res) {
                 source->m_albumCover = lazySprite->getTexture();
                 lazySprite->release();
@@ -406,7 +406,7 @@ void AudioManager::populateAlbumCover(std::shared_ptr<AudioSource> source, FMOD_
     em::log::debug("Not found in cache! ({})", hash);
 
     // if there is no image/ prefix, image/ is implied - add it
-    if (std::string_view(mimeType).find("image/") != 0) { mimeType = "image/" + mimeType; }
+    if (mimeType.view().find("image/") != 0) { mimeType = "image/" + mimeType; }
 
     auto format = em::utils::mimeTypeToFormat(mimeType);
 
@@ -455,7 +455,7 @@ std::string AudioManager::filterNameThruRegex(geode::ZStringView songName) {
     std::string ret = "";
 
     for (int i = 0; i < songName.length(); i++) {
-        char character = songName[i];
+        char character = songName.view()[i];
 
         if (character == 0x00) continue;
         if (character < ' ' || character > '~') character = '?';
@@ -668,8 +668,8 @@ std::shared_ptr<AudioSource> AudioManager::getCurrentSong() {
 
 unsigned int AudioManager::getCurrentSongPosition() {
     unsigned int curPos;
-	m_channel->getPosition(&curPos, FMOD_TIMEUNIT_MS);
-	return curPos;
+    m_channel->getPosition(&curPos, FMOD_TIMEUNIT_MS);
+    return curPos;
 }
 
 unsigned int AudioManager::getCurrentSongLength() {

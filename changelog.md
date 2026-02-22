@@ -1,4 +1,8 @@
 # EditorMusic
+## v2.2.7
+- Geode v5 beta 4 support!
+- Fix keybinds and stuff
+- Replace all tabs with spaces
 ## v2.2.6
 - Geode v5 and GD 2.2081 support!
 ## v2.2.5

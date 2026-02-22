@@ -1,7 +1,4 @@
 #include "LevelEditorLayer.hpp"
-#ifndef GEODE_IS_IOS
-#include <geode.custom-keybinds/include/Keybinds.hpp>
-#endif
 #include "../AudioManager.hpp"
 #include "../log.hpp"
 #include "../ui/SongInfoPopup.hpp"
@@ -30,9 +27,11 @@ bool HookedLevelEditorLayer::init(GJGameLevel* p0, bool p1) {
     if (!isLikelyObjectWorkshop) AudioManager::get().enterEditor();
     else em::log::debug("prevented enterEditor because likely object workshop!");
 
-#ifndef GEODE_IS_IOS
-    addEventListener<keybinds::InvokeBindFilter>([](keybinds::InvokeBindEvent* event) {
-        if (event->isDown()) {
+    addEventListener(
+        geode::KeybindSettingPressedEventV3(geode::Mod::get(), "pause-song"),
+        [](geode::Keybind const& keybind, bool down, bool repeat, double timestamp) {
+            if (!down || repeat) return;
+
             em::log::debug("Keybind: Pause");
 
             if (auto pop = SongInfoPopup::get()) {
@@ -41,28 +40,27 @@ bool HookedLevelEditorLayer::init(GJGameLevel* p0, bool p1) {
                 AudioManager::get().togglePause();
             }
         }
+    );
 
-        return geode::ListenerResult::Propagate;
-    }, "pause-song"_spr);
+    addEventListener(
+        geode::KeybindSettingPressedEventV3(geode::Mod::get(), "next-song"),
+        [](geode::Keybind const& keybind, bool down, bool repeat, double timestamp) {
+            if (!down || repeat) return;
 
-    addEventListener<keybinds::InvokeBindFilter>([](keybinds::InvokeBindEvent* event) {
-        if (event->isDown()) {
             em::log::debug("Keybind: Next song");
             AudioManager::get().nextSong();
         }
+    );
 
-        return geode::ListenerResult::Propagate;
-    }, "next-song"_spr);
+    addEventListener(
+        geode::KeybindSettingPressedEventV3(geode::Mod::get(), "prev-song"),
+        [](geode::Keybind const& keybind, bool down, bool repeat, double timestamp) {
+            if (!down || repeat) return;
 
-    addEventListener<keybinds::InvokeBindFilter>([](keybinds::InvokeBindEvent* event) {
-        if (event->isDown()) {
             em::log::debug("Keybind: Prev song");
             AudioManager::get().prevSong();
         }
-
-        return geode::ListenerResult::Propagate;
-    }, "prev-song"_spr);
-#endif
+    );
 
     return true;
 }

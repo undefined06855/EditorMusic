@@ -57,8 +57,6 @@ bool PreloadUI::init() {
 }
 
 void PreloadUI::addToSceneAndAnimate() {
-    auto scene = cocos2d::CCScene::get();
-    scene->addChild(this);
     geode::OverlayManager::get()->addChild(this);
 
     setPosition(m_animUpperPos);
@@ -87,13 +85,6 @@ void PreloadUI::runCompleteAnimationAndRemove() {
         m_progressLabel->setString("No songs loaded!");
         m_progressLabel->limitLabelWidth(190.f, .7f, 0.1f);
         m_subtitleLabel->setString("");
-    }
-
-    geode::OverlayManager::get()->removeChild(this);
-
-    if (!cocos2d::CCScene::get()) {
-        removeFromParent();
-        return;
     }
 
     runAction(

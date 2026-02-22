@@ -1,105 +1,120 @@
 {
-	"geode": "5.0.0-alpha.2",
-	"gd": {
-		"win": "2.2081",
-		"mac": "2.2081",
-		"android": "2.2081",
-		"ios": "2.2081"
-	},
+    "geode": "5.0.0-beta.4",
+    "gd": {
+        "win": "2.2081",
+        "mac": "2.2081",
+        "android": "2.2081",
+        "ios": "2.2081"
+    },
 
-	"version": "v2.2.6",
-	"id": "undefined0.editormusic",
-	"name": "EditorMusic",
-	"developer": "undefined0",
-	"description": "Music in your editor, what's not to like?",
-	"tags": [ "editor", "music", "enhancement" ],
+    "version": "v2.2.7",
+    "id": "undefined0.editormusic",
+    "name": "EditorMusic",
+    "developer": "undefined0",
+    "description": "Music in your editor, what's not to like?",
+    "tags": [ "editor", "music", "enhancement" ],
 
-	"early-load": true,
+    "early-load": true,
 
-	"dependencies": {
-		"geode.node-ids": "1.19.0",
-		"geode.custom-keybinds": {
-			"version": "1.10.2",
-			"platforms": [ "win", "android32", "android64", "mac" ],
-			"importance": "required"
-		},
-		"eclipse.eclipse-menu": "v1.7.0"
-	},
+    "dependencies": {
+        "geode.node-ids": "1.19.0"
+    },
 
-	"links": {
-		"source": "https://github.com/undefined06855/EditorMusic"
-	},
+    "links": {
+        "source": "https://github.com/undefined06855/EditorMusic"
+    },
 
-	"resources": {
-		"sprites": [ "./resources/*.png", "./resources/*/*.png" ]
-	},
+    "resources": {
+        "sprites": [ "./resources/*.png", "./resources/*/*.png" ]
+    },
 
-	"settings": {
-		"volume": {
-			"name": "Music volume",
-			"type": "float",
-			"default": 0.8,
-			"min": 0,
-			"max": 1,
-			"control": {
-				"slider": true,
-				"input": true,
-				"big-arrows": false,
-				"arrows": false,
-				"slider-step": 0.01
-			}
-		},
-		"player-format": {
-			"name": "Music player layout",
-			"type": "string",
-			"default": "default",
-			"one-of": [ "default", "centered no album", "centered with album" ]
-		},
-		"round-corners": {
-			"name": "Round corners of album cover",
-			"type": "string",
-			"default": "round",
-			"one-of": [ "none", "round", "round with overlay" ]
-		},
-		"low-pass": {
-			"name": "Enable low-pass filter",
-			"description": "Enable or disable the low-pass filter that makes the sound \"muffled\" when you go deeper into menus.",
-			"type": "bool",
-			"default": true
-		},
-		"next-song-notif": {
-			"name": "Next Song notification",
-			"description": "Shows a little notification with the title of the song in the editor whenever the song changes.",
-			"type": "bool",
-			"default": true
-		},
-		"media-controls": {
-			"name": "Windows media control support",
-			"description": "(Windows only) Enables the mod to listen to media controls to control playing, pausing, next song and previous song.",
-			"type": "bool",
-			"default": true,
-			"platforms": [ "win" ]
-		},
-		"extra-songs-path": {
-			"name": "Extra songs path",
-			"type": "folder",
-			"description": "If this is set to a path, EditorMusic will take songs from here as well as the config folder.",
-			"default": "(none)",
+    "settings": {
+        "pause-song": {
+            "type": "keybind",
+            "name": "Play/Pause",
+            "default": "Ctrl+P",
+            "category": "editor",
+            "migrate-from": "undefined0.editormusic/pause-song"
+        },
+        "next-song": {
+            "type": "keybind",
+            "name": "Next song",
+            "default": "Ctrl+Right",
+            "category": "editor",
+            "migrate-from": "undefined0.editormusic/next-song"
+        },
+        "prev-song": {
+            "type": "keybind",
+            "name": "Next song",
+            "default": "Ctrl+Left",
+            "category": "editor",
+            "migrate-from": "undefined0.editormusic/prev-song"
+        },
+        "volume": {
+            "name": "Music volume",
+            "type": "float",
+            "default": 0.8,
+            "min": 0,
+            "max": 1,
+            "control": {
+                "slider": true,
+                "input": true,
+                "big-arrows": false,
+                "arrows": false,
+                "slider-step": 0.01
+            }
+        },
+        "player-format": {
+            "name": "Music player layout",
+            "type": "string",
+            "default": "default",
+            "one-of": [ "default", "centered no album", "centered with album" ]
+        },
+        "round-corners": {
+            "name": "Round corners of album cover",
+            "type": "string",
+            "default": "round",
+            "one-of": [ "none", "round", "round with overlay" ]
+        },
+        "low-pass": {
+            "name": "Enable low-pass filter",
+            "description": "Enable or disable the low-pass filter that makes the sound \"muffled\" when you go deeper into menus.",
+            "type": "bool",
+            "default": true
+        },
+        "next-song-notif": {
+            "name": "Next Song notification",
+            "description": "Shows a little notification with the title of the song in the editor whenever the song changes.",
+            "type": "bool",
+            "default": true
+        },
+        "media-controls": {
+            "name": "Windows media control support",
+            "description": "(Windows only) Enables the mod to listen to media controls to control playing, pausing, next song and previous song.",
+            "type": "bool",
+            "default": true,
+            "platforms": [ "win" ]
+        },
+        "extra-songs-path": {
+            "name": "Extra songs path",
+            "type": "folder",
+            "description": "If this is set to a path, EditorMusic will take songs from here as well as the config folder.",
+            "default": "(none)",
             "platforms": [ "win", "android32", "android64", "mac" ]
-		},
-		"dev-title": {
-			"type": "title",
-			"name": "Other Options"
-		},
-		"enable-log": {
-			"name": "Enable logging",
-			"description": "Enables logging for easier debugging - will make very large logs, only enable if you need to!",
-			"type": "bool",
-			"default": false
-		},
-		"reload-songs": {
-			"name": "Reload songs",
-			"type": "custom:reload-song-button"
-		}
-	}
+        },
+        "dev-title": {
+            "type": "title",
+            "name": "Other Options"
+        },
+        "enable-log": {
+            "name": "Enable logging",
+            "description": "Enables logging for easier debugging - will make very large logs, only enable if you need to!",
+            "type": "bool",
+            "default": false
+        },
+        "reload-songs": {
+            "name": "Reload songs",
+            "type": "custom:reload-song-button"
+        }
+    }
 }
