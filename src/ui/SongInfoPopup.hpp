@@ -7,6 +7,7 @@ class SongInfoPopup : public geode::Popup {
 public:
     static SongInfoPopup* create();
     bool init();
+    void addPlaylistButton();
     static SongInfoPopup* get();
 
     cocos2d::CCLabelBMFont* m_currentSongLabel;
@@ -38,6 +39,7 @@ public:
 
     void onSettings(cocos2d::CCObject* sender);
     void onNoSongsRefresh(cocos2d::CCObject* sender);
+    void onSongView(cocos2d::CCObject* sender);
 
     cocos2d::CCSprite* getRandomSpriteForNoSongPopup();
 

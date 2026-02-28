@@ -18,6 +18,8 @@ public:
     bool m_shownLoadIssues;
     std::vector<LoadIssue> m_loadIssues;
 
+    std::string m_playlist;
+
     std::deque<std::shared_ptr<AudioSource>> m_queue;
     std::deque<std::shared_ptr<AudioSource>> m_history;
     int m_queueLength;
@@ -50,15 +52,22 @@ public:
 
     void populateSongs();
     void populateSongsThread();
-    void setupPreloadUIFromPath(std::filesystem::path path);
-    void populateSongsFromPath(std::filesystem::path path);
+    std::filesystem::path pathForPlaylistFile(geode::ZStringView name);
+    std::vector<std::filesystem::path> searchPlaylistFile(geode::ZStringView name);
+    void setupPreloadUIFromPath(const std::filesystem::path& path);
+    void populateSongsFromPath(const std::filesystem::path& path);
     bool populateAudioSourceInfo(std::shared_ptr<AudioSource> source);
     std::string populateStringTag(FMOD_TAG tag, bool useTitleFallback, std::shared_ptr<AudioSource> sourceForFallback = nullptr);
     void populateAlbumCover(std::shared_ptr<AudioSource> source, FMOD_TAG tag);
-    std::string figureOutFallbackName(std::filesystem::path path);
+    std::string figureOutFallbackName(const std::filesystem::path& path);
     std::string filterNameThruRegex(geode::ZStringView songName);
     std::string formatArtistString(geode::ZStringView artists);
-    bool isValidAudioFile(std::filesystem::path path);
+    bool isValidAudioFile(const std::filesystem::path& path);
+
+    bool playlistFileExists(geode::ZStringView name);
+    geode::Result<> writePlaylistFile(geode::ZStringView name, std::vector<std::shared_ptr<AudioSource>> songs);
+    geode::Result<std::string> addToPlaylistFile(geode::ZStringView name, std::vector<std::shared_ptr<AudioSource>> songs);
+    geode::Result<std::string> removeFromPlaylistFile(geode::ZStringView name, std::vector<std::shared_ptr<AudioSource>> songs);
 
     void checkQueueLength();
 

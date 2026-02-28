@@ -3,6 +3,7 @@
 #include "../AudioManager.hpp"
 #include "../utils.hpp"
 #include "../log.hpp"
+#include "SongViewPopup.hpp"
 
 // TODO: play/pause button can get desynced if you use a keybind to pause while
 // the popup is open
@@ -44,9 +45,18 @@ bool SongInfoPopup::init() {
         secondaryNoticeLabel->setScale(.3f);
         m_mainLayer->addChildAtPosition(secondaryNoticeLabel, geode::Anchor::Center, { 0.f, -3.f });
 
-        auto reloadButton = CCMenuItemSpriteExtra::create(ButtonSprite::create("Reload"), this, menu_selector(SongInfoPopup::onNoSongsRefresh));
+        auto playlistNoticeLabel = cocos2d::CCLabelBMFont::create(fmt::format("(You have the playlist {} enabled, is it empty?)", am.m_playlist).c_str(), "bigFont.fnt");
+        playlistNoticeLabel->setID("no-songs-playlist-notice-label");
+        playlistNoticeLabel->setScale(.2f);
+        if (am.m_playlist != "all") {
+            m_mainLayer->addChildAtPosition(playlistNoticeLabel, geode::Anchor::Center, { 0.f, -33.f });
+        }
+
+        auto reloadSpr = ButtonSprite::create("Reload"); // persona 3 reload
+        reloadSpr->setScale(.65f);
+        auto reloadButton = CCMenuItemSpriteExtra::create(reloadSpr, this, menu_selector(SongInfoPopup::onNoSongsRefresh));
         reloadButton->setID("no-songs-reload-button");
-        m_buttonMenu->addChildAtPosition(reloadButton, geode::Anchor::Bottom, { 0.f, 24.f });
+        m_buttonMenu->addChildAtPosition(reloadButton, geode::Anchor::Bottom, { 0.f, 20.f });
 
         auto settingsSprite = cocos2d::CCSprite::createWithSpriteFrameName("GJ_optionsBtn_001.png");
         settingsSprite->setScale(.6f);
@@ -64,6 +74,8 @@ bool SongInfoPopup::init() {
         m_mainLayer->addChildAtPosition(spr, geode::Anchor::Left, { 20.f, 0.f });
 
         setTitle("Uh oh!");
+
+        addPlaylistButton();
 
         return true;
     }
@@ -85,6 +97,8 @@ bool SongInfoPopup::init() {
 
         return true;
     }
+
+    addPlaylistButton();
 
     m_progressBar = ProgressBar::create(345.f);
     m_progressBar->setID("song-progress-bar");
@@ -179,6 +193,17 @@ bool SongInfoPopup::init() {
     scheduleUpdate();
 
     return true;
+}
+
+void SongInfoPopup::addPlaylistButton() {
+    auto songViewSpr = cocos2d::CCSprite::createWithSpriteFrameName("GJ_menuBtn_001.png");
+    songViewSpr->setScale(0.492f);
+    auto songViewButton = CCMenuItemSpriteExtra::create(
+        songViewSpr,
+        this, menu_selector(SongInfoPopup::onSongView)
+    );
+    songViewButton->setID("song-view-button");
+    m_buttonMenu->addChildAtPosition(songViewButton, geode::Anchor::TopRight, { 0.f, -33.f });
 }
 
 void SongInfoPopup::updateCustomizableUI() {
@@ -314,5 +339,7 @@ void SongInfoPopup::onNoSongsRefresh(cocos2d::CCObject* sender) {
     AudioManager::get().populateSongs();
     onClose(sender);
 }
+
+void SongInfoPopup::onSongView(cocos2d::CCObject* sender) { SongViewPopup::create()->show(); }
 
 void SongInfoPopup::close() { onClose(nullptr); }
