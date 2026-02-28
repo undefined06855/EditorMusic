@@ -1,4 +1,6 @@
 # EditorMusic
+## v2.3.0
+- Added playlists!
 ## v2.2.6
 - Added Geode v5 and GD 2.2081 support!
 - Replaced all tabs with spaces

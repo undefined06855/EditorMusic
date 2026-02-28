@@ -5,7 +5,7 @@ by [undefined0](user:13351341)
 
 Ever thought your editor experience was too quiet?
 Ever needed some funky music to boost your energy, or some calm music to help you focus on level building?
-Hate editing in music in post, or want to liven your livestream?
+Hate editing in music in post, or want to liven your livestream? (wow this is so cheesy)
 
 Well do I have the mod for you!
 
