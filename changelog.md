@@ -1,4 +1,7 @@
 # EditorMusic
+## v2.3.1
+- Fixed an issue where jitless iOS dies for the 2 users who care
+- Moved to geode's StringMap
 ## v2.3.0
 - Added playlists!
 ## v2.2.6

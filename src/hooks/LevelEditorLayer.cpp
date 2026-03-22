@@ -3,6 +3,11 @@
 #include "../log.hpp"
 #include "../ui/SongInfoPopup.hpp"
 
+HookedLevelEditorLayer::Fields::~Fields() {
+    em::log::info("Exited editor, lel fields dtor");
+    AudioManager::get().exitEditor();
+}
+
 bool HookedLevelEditorLayer::init(GJGameLevel* p0, bool p1) {
     if (!LevelEditorLayer::init(p0, p1)) return false;
 

@@ -4,6 +4,8 @@
 
 class $modify(HookedLevelEditorLayer, LevelEditorLayer) {
     struct Fields {
+        ~Fields();
+        
         std::shared_ptr<AudioSource> m_currentSong;
         cocos2d::CCLabelBMFont* m_songPopupLabel;
     };

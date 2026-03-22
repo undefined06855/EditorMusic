@@ -1,5 +1,5 @@
 {
-    "geode": "5.2.0",
+    "geode": "5.4.0",
     "gd": {
         "win": "2.2081",
         "mac": "2.2081",
@@ -7,7 +7,7 @@
         "ios": "2.2081"
     },
 
-    "version": "v2.3.0",
+    "version": "v2.3.1",
     "id": "undefined0.editormusic",
     "name": "EditorMusic",
     "developer": "undefined0",

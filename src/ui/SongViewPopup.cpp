@@ -21,7 +21,7 @@ bool SongViewPopup::init() {
     setID("SongViewPopup"_spr);
     setTitle("Song Listing");
 
-    m_playlistName = geode::TextInput::create(460.f, "Type a playlist name or \"all\" to view all songs...");
+    m_playlistName = geode::TextInput::create(460.f, "Type a playlist name or \"all\" then press load to view all songs...");
     m_playlistName->setScale(.65f);
     m_playlistName->getBGSprite()->setContentHeight(73.f);
     m_mainLayer->addChildAtPosition(m_playlistName, geode::Anchor::TopLeft, { 163.f, -49.5f });
@@ -221,7 +221,8 @@ void SongViewPopup::onInfo(cocos2d::CCObject* sender) {
         "or <cj>Remove from playlist</c> to do those actions to the playlist "
         "selected at the top.\n\n"
         "Press the <ca>folder icon</c> to open the folder containing the <cr>.m3u</c> files (you can <cl>import</c> "
-        "your own playlist files, created externally!)",
+        "your own playlist files, created externally!)\n\n"
+        "Type <cp>\"all\"</c>, then press <cj>load</c> to load all songs again.",
         okay, nullptr,
         370.f
     )->show();

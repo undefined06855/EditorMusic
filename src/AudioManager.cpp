@@ -281,7 +281,7 @@ bool AudioManager::populateAudioSourceInfo(std::shared_ptr<AudioSource> source) 
     }
 
     // figure out metadata for name and if it exists
-    static std::map<geode::ZStringView, geode::ZStringView> nameExtensionMap = {
+    static geode::utils::StringMap<geode::ZStringView> nameExtensionMap = {
         { ".mp3", "TIT2" },
         { ".wav", "INAM" },
         { ".ogg", "TITLE" },
@@ -299,7 +299,7 @@ bool AudioManager::populateAudioSourceInfo(std::shared_ptr<AudioSource> source) 
     }
 
     // figure out metadata for artist and if it exists
-    static std::map<geode::ZStringView, geode::ZStringView> artistExtensionMap = {
+    static geode::utils::StringMap<geode::ZStringView> artistExtensionMap = {
         { ".mp3", "TPE1" },
         { ".wav", "IART" },
         { ".ogg", "ARTIST" },

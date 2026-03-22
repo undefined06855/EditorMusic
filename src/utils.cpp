@@ -15,7 +15,7 @@ std::string formatTime(unsigned int ms) {
 }
 
 cocos2d::CCImage::EImageFormat mimeTypeToFormat(geode::ZStringView mimeType) {
-    static const std::unordered_map<std::string_view, cocos2d::CCImage::EImageFormat> formatToMap = {
+    static const geode::utils::StringMap<cocos2d::CCImage::EImageFormat> formatToMap = {
         { "image/png", cocos2d::CCImage::EImageFormat::kFmtPng },
         { "image/jpg", cocos2d::CCImage::EImageFormat::kFmtJpg },
         { "image/jpeg", cocos2d::CCImage::EImageFormat::kFmtJpg },
