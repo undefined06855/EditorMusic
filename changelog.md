@@ -1,4 +1,6 @@
 # EditorMusic
+## v2.3.2
+- Fixed an issue where changing "Round corners of album cover" to "none" crashed when the song info popup next updates
 ## v2.3.1
 - Fixed an issue where jitless iOS dies for the 2 users who care
 - Moved to geode's StringMap

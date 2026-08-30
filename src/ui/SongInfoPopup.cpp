@@ -263,8 +263,8 @@ void SongInfoPopup::update(float dt) {
 
 void SongInfoPopup::updateAlbumCover() {
     if (m_isInStrippedBackMode) return;
-    if (m_albumCoverSprite) m_albumCoverSprite->removeFromParent();
-    if (m_albumCoverClipSprite) m_albumCoverClipSprite->removeFromParent();
+    if (m_albumCoverSprite) { m_albumCoverSprite->removeFromParent(); m_albumCoverSprite = nullptr; }
+    if (m_albumCoverClipSprite) { m_albumCoverClipSprite->removeFromParent(); m_albumCoverClipSprite = nullptr; }
 
     if (m_currentSong->m_albumCover) {
         em::log::debug("Album cover found for {}", m_currentSong->m_name);
