@@ -22,7 +22,7 @@ $on_mod(Loaded) {
         if (popup) popup->updateCustomizableUI();
     });
 
-    geode::listenForSettingChanges<std::string>("extra-songs-path", [](std::filesystem::path value) {
+    geode::listenForSettingChanges<std::string>("extra-songs-path", [](asp::fs::Path value) {
         AudioManager::get().populateSongs();
     });
 

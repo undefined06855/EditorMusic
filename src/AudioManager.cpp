@@ -2,6 +2,7 @@
 #include "fmod_common.h"
 #include "ui/SongInfoPopup.hpp"
 #include <Geode/fmod/fmod_errors.h>
+#include <asp/fs/fs.hpp>
 #include <simdutf.h>
 #include "utils.hpp"
 #include "log.hpp"
@@ -77,9 +78,9 @@ void AudioManager::populateSongsThread() {
     geode::log::pushNest();
     if (m_playlist == "all") {
         setupPreloadUIFromPath(geode::Mod::get()->getConfigDir());
-        setupPreloadUIFromPath(geode::Mod::get()->getSettingValue<std::filesystem::path>("extra-songs-path"));
+        setupPreloadUIFromPath(geode::Mod::get()->getSettingValue<asp::fs::Path>("extra-songs-path"));
         populateSongsFromPath(geode::Mod::get()->getConfigDir());
-        populateSongsFromPath(geode::Mod::get()->getSettingValue<std::filesystem::path>("extra-songs-path"));
+        populateSongsFromPath(geode::Mod::get()->getSettingValue<asp::fs::Path>("extra-songs-path"));
     } else {
         // get playlist file
         auto paths = searchPlaylistFile(m_playlist);
@@ -130,35 +131,36 @@ void AudioManager::populateSongsThread() {
     m_isQueueBeingPopulated = false;
 }
 
-void AudioManager::setupPreloadUIFromPath(const std::filesystem::path& path) {
-    if (!std::filesystem::exists(path)) return;
+void AudioManager::setupPreloadUIFromPath(asp::fs::PathView path) {
+    if (!path.exists()) return;
     em::log::debug("Populating song total from path...");
-    for (const auto& file : std::filesystem::directory_iterator(path)) {
-        if (std::filesystem::is_directory(file)) {
-            setupPreloadUIFromPath(file);
-            continue;
-        }
+    auto iter = asp::fs::iterDirRecursive(path);
+    if (iter.isErr()) return;
+    for (auto res : iter.unwrap()) {
+        if (res.isErr()) continue;
+        auto entry = res.unwrap();
+        if (entry.isDir()) continue;
 
-        if (!isValidAudioFile(file)) continue;
+        if (!isValidAudioFile(entry.path)) continue;
 
         m_preloadUI->m_totalSongs++;
     }
 }
 
-void AudioManager::populateSongsFromPath(const std::filesystem::path& path) {
-    if (!std::filesystem::exists(path)) return;
+void AudioManager::populateSongsFromPath(asp::fs::PathView path) {
+    if (!path.exists()) return;
     em::log::debug("Populating songs from path...");
 
-    for (const auto& file : std::filesystem::directory_iterator(path)) {
-        if (std::filesystem::is_directory(file)) {
-            // stack overflow from the person with 10000 folders inside each other incoming
-            populateSongsFromPath(file);
-            continue;
-        }
+    auto iter = asp::fs::iterDirRecursive(path);
+    if (iter.isErr()) return;
+    for (auto res : iter.unwrap()) {
+        if (res.isErr()) continue;
+        auto entry = res.unwrap();
+        if (entry.isDir()) continue;
 
-        if (!isValidAudioFile(file)) continue;
+        if (!isValidAudioFile(entry.path)) continue;
 
-        auto source = std::make_shared<AudioSource>(file.path());
+        auto source = std::make_shared<AudioSource>(entry.path);
         bool ret = populateAudioSourceInfo(source);
         if (ret) {
             m_songs.push_back(source);
@@ -173,11 +175,11 @@ void AudioManager::populateSongsFromPath(const std::filesystem::path& path) {
     }
 }
 
-std::filesystem::path AudioManager::pathForPlaylistFile(geode::ZStringView name) {
+asp::fs::Path AudioManager::pathForPlaylistFile(geode::ZStringView name) {
     return geode::Mod::get()->getConfigDir() / fmt::format("{}.m3u", name);
 }
 
-std::vector<std::filesystem::path> AudioManager::searchPlaylistFile(geode::ZStringView name) {
+std::vector<asp::fs::Path> AudioManager::searchPlaylistFile(geode::ZStringView name) {
     if (!playlistFileExists(name)) {
         em::log::debug("wow playlist {} doesnt exist", name);
         return {};
@@ -186,17 +188,17 @@ std::vector<std::filesystem::path> AudioManager::searchPlaylistFile(geode::ZStri
     auto playlistFile = pathForPlaylistFile(name);
 
     auto contents = geode::utils::file::readString(playlistFile).unwrapOrDefault();
-    std::vector<std::filesystem::path> ret;
+    std::vector<asp::fs::Path> ret;
 
     for (auto line : geode::utils::string::split(contents, "\n")) {
         line = geode::utils::string::trim(line);
         if (line.starts_with("#") || line.empty()) continue;
 
-        auto path = std::filesystem::path(line);
-        if (path.is_absolute()) { // ABSOLUTE MEGAHACK NO WAY
+        auto path = asp::fs::Path(line);
+        if (path.isAbsolute()) { // ABSOLUTE MEGAHACK NO WAY
             ret.push_back(path);
         } else {
-            ret.push_back(playlistFile.parent_path() / path);
+            ret.push_back(playlistFile.parent().value() / path);
         }
 
         em::log::debug("{}", path);
@@ -207,24 +209,24 @@ std::vector<std::filesystem::path> AudioManager::searchPlaylistFile(geode::ZStri
     return ret;
 }
 
-bool AudioManager::isValidAudioFile(const std::filesystem::path& path) {
+bool AudioManager::isValidAudioFile(asp::fs::PathView path) {
     // https://fmod.com/docs/2.02/api/core-api-sound.html#fmod_sound_type
     static const std::array<geode::ZStringView, 20> validFiles = {
-        ".aiff", ".aif",
-        ".asf", ".wma", ".wmv",
-        ".dls",
-        ".flac",
-        ".fsb",
-        ".it",
-        ".mid",
-        ".mod",
-        ".mp2", ".mp3", ".wav",
-        ".ogg",
-        // ".asx", ".pls", ".m3u", ".wax", // no audio info, just tags
-        ".raw",
-        ".s3m",
-        ".wav",
-        ".xm",
+        "aiff", "aif",
+        "asf", "wma", "wmv",
+        "dls",
+        "flac",
+        "fsb",
+        "it",
+        "mid",
+        "mod",
+        "mp2", "mp3", "wav",
+        "ogg",
+        // "asx", "pls", "m3u", "wax", // no audio info, just tags
+        "raw",
+        "s3m",
+        "wav",
+        "xm",
     };
 
     return std::find(validFiles.begin(), validFiles.end(), path.extension()) != validFiles.end();
@@ -235,7 +237,7 @@ bool AudioManager::populateAudioSourceInfo(std::shared_ptr<AudioSource> source) 
     em::log::debug("Populating audio source info for {}", source->m_path.filename());
     geode::log::pushNest();
 
-    auto pathString = geode::utils::string::pathToString(source->m_path);
+    auto pathString = source->m_path.string();
 
     // FMOD_OPENONLY loads it but does not allocate memory for the actual sound data
     // so is great for just reading the metadata
@@ -259,15 +261,15 @@ bool AudioManager::populateAudioSourceInfo(std::shared_ptr<AudioSource> source) 
         } else {
             // failed to read - most likely unsupported format
             m_loadIssues.push_back(LoadIssue{
-                .m_message = geode::utils::string::pathToString(source->m_path.filename()),
+                .m_message = source->m_path.filename().value_or("").string(),
                 .m_type = ret
             });
             return false;
         }
     }
 
-    auto extension = geode::utils::string::pathToString(source->m_path.extension());
-    std::array<geode::ZStringView, 4> supportedMetadataFormats = { ".mp3", ".wav", ".ogg", ".flac" };
+    auto extension = std::string(source->m_path.extension().value_or(""));
+    std::array<geode::ZStringView, 4> supportedMetadataFormats = { "mp3", "wav", "ogg", "flac" };
     if (std::find(supportedMetadataFormats.begin(), supportedMetadataFormats.end(), extension) == supportedMetadataFormats.end()) {
         // not supported for getting metadata
         source->m_name = figureOutFallbackName(source->m_path);
@@ -282,10 +284,10 @@ bool AudioManager::populateAudioSourceInfo(std::shared_ptr<AudioSource> source) 
 
     // figure out metadata for name and if it exists
     static geode::utils::StringMap<geode::ZStringView> nameExtensionMap = {
-        { ".mp3", "TIT2" },
-        { ".wav", "INAM" },
-        { ".ogg", "TITLE" },
-        { ".flac", "TITLE" }
+        { "mp3", "TIT2" },
+        { "wav", "INAM" },
+        { "ogg", "TITLE" },
+        { "flac", "TITLE" }
     };
     FMOD_TAG nameTag;
     geode::ZStringView nameTagString = nameExtensionMap[extension];
@@ -300,10 +302,10 @@ bool AudioManager::populateAudioSourceInfo(std::shared_ptr<AudioSource> source) 
 
     // figure out metadata for artist and if it exists
     static geode::utils::StringMap<geode::ZStringView> artistExtensionMap = {
-        { ".mp3", "TPE1" },
-        { ".wav", "IART" },
-        { ".ogg", "ARTIST" },
-        { ".flac", "ARTIST" }
+        { "mp3", "TPE1" },
+        { "wav", "IART" },
+        { "ogg", "ARTIST" },
+        { "flac", "ARTIST" }
     };
     FMOD_TAG artistTag;
     geode::ZStringView artistTagString = artistExtensionMap[extension];
@@ -319,7 +321,7 @@ bool AudioManager::populateAudioSourceInfo(std::shared_ptr<AudioSource> source) 
 
     // only mp3 covers supported for now
     FMOD_TAG albumCoverTag;
-    if (extension == ".mp3") {
+    if (extension == "mp3") {
         geode::utils::thread::setName(fmt::format("EditorMusic Tag Population (album ({}) for {})", artistTagString, source->m_path.filename()));
         FMOD_RESULT albumRes = sound->getTag("APIC", 0, &albumCoverTag);
         if (albumRes != FMOD_ERR_TAGNOTFOUND) populateAlbumCover(source, albumCoverTag);
@@ -513,9 +515,9 @@ void AudioManager::populateAlbumCover(std::shared_ptr<AudioSource> source, FMOD_
     });
 }
 
-std::string AudioManager::figureOutFallbackName(const std::filesystem::path& path) {
+std::string AudioManager::figureOutFallbackName(asp::fs::PathView path) {
     // stem is filename without the extension
-    return filterNameThruRegex(geode::utils::string::pathToString(path.stem()));
+    return filterNameThruRegex(std::string(path.stem().value_or("")));
 }
 
 std::string AudioManager::filterNameThruRegex(geode::ZStringView songName) {
@@ -565,7 +567,7 @@ bool AudioManager::playlistFileExists(geode::ZStringView name) {
     em::log::debug("playlistFileExists({})", name);
 
     if (name == "all") return true;
-    return std::filesystem::exists(pathForPlaylistFile(name));
+    return pathForPlaylistFile(name).exists();
 }
 
 geode::Result<> AudioManager::writePlaylistFile(geode::ZStringView name, std::vector<std::shared_ptr<AudioSource>> songs) {
@@ -580,7 +582,7 @@ geode::Result<> AudioManager::writePlaylistFile(geode::ZStringView name, std::ve
 
     out += "#EXTM3U\n# Generated by EditorMusic\n\n";
     for (auto song : songs) {
-        out += geode::utils::string::pathToString(song->m_path);
+        out += song->m_path.string();
         out += "\n";
     }
 
@@ -605,7 +607,7 @@ geode::Result<std::string> AudioManager::addToPlaylistFile(geode::ZStringView na
     }
 
     for (auto song : songs) {
-        auto pathString = geode::utils::string::pathToString(song->m_path);
+        auto pathString = song->m_path.string();
         if (std::find(paths.begin(), paths.end(), song->m_path) != paths.end()) continue; // already in the file
         file += pathString;
         file += "\n";
@@ -630,7 +632,7 @@ geode::Result<std::string> AudioManager::removeFromPlaylistFile(geode::ZStringVi
     std::vector<std::string> blacklist;
 
     for (auto song : songs) {
-        blacklist.push_back(geode::utils::string::pathToString(song->m_path));
+        blacklist.push_back(song->m_path.string());
     }
 
     for (auto line : geode::utils::string::split(file, "\n")) {

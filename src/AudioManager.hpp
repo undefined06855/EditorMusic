@@ -52,17 +52,17 @@ public:
 
     void populateSongs();
     void populateSongsThread();
-    std::filesystem::path pathForPlaylistFile(geode::ZStringView name);
-    std::vector<std::filesystem::path> searchPlaylistFile(geode::ZStringView name);
-    void setupPreloadUIFromPath(const std::filesystem::path& path);
-    void populateSongsFromPath(const std::filesystem::path& path);
+    asp::fs::Path pathForPlaylistFile(geode::ZStringView name);
+    std::vector<asp::fs::Path> searchPlaylistFile(geode::ZStringView name);
+    void setupPreloadUIFromPath(asp::fs::PathView path);
+    void populateSongsFromPath(asp::fs::PathView path);
     bool populateAudioSourceInfo(std::shared_ptr<AudioSource> source);
     std::string populateStringTag(FMOD_TAG tag, bool useTitleFallback, std::shared_ptr<AudioSource> sourceForFallback = nullptr);
     void populateAlbumCover(std::shared_ptr<AudioSource> source, FMOD_TAG tag);
-    std::string figureOutFallbackName(const std::filesystem::path& path);
+    std::string figureOutFallbackName(asp::fs::PathView path);
     std::string filterNameThruRegex(geode::ZStringView songName);
     std::string formatArtistString(geode::ZStringView artists);
-    bool isValidAudioFile(const std::filesystem::path& path);
+    bool isValidAudioFile(asp::fs::PathView path);
 
     bool playlistFileExists(geode::ZStringView name);
     geode::Result<> writePlaylistFile(geode::ZStringView name, std::vector<std::shared_ptr<AudioSource>> songs);

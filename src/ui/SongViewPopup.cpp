@@ -23,7 +23,7 @@ bool SongViewPopup::init() {
 
     m_playlistName = geode::TextInput::create(460.f, "Type a playlist name or \"all\" then press load to view all songs...");
     m_playlistName->setScale(.65f);
-    m_playlistName->getBGSprite()->setContentHeight(73.f);
+    m_playlistName->getBGSprite()->setContentHeight(33.f);
     m_mainLayer->addChildAtPosition(m_playlistName, geode::Anchor::TopLeft, { 163.f, -49.5f });
 
     auto loadSpr = ButtonSprite::create("Load");

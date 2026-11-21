@@ -1,7 +1,6 @@
 # EditorMusic
 ## v2.4.0
 - Added Geode v6 and GD 2.2091 support!
-
 ## v2.3.2
 - Fixed an issue where changing "Round corners of album cover" to "none" crashed when the song info popup next updates
 ## v2.3.1
